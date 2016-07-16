@@ -41,11 +41,7 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
         initComponents();
         jList1.setModel(new DefaultListModel<String>());
         jList2.setModel(new DefaultListModel<String>());
-        ArrayList<DatTag> list = ModelPictures.getInstance().getAllTags();
-        for (int i = 0; i < list.size(); i++) {
-            
-            ((DefaultListModel<String>) jList1.getModel()).add(i, list.get(i).Text);
-        }
+        update();
         jList1.setTransferHandler(new ListTransferHandler());
         jList2.setTransferHandler(new ListTransferHandler());
     }
@@ -111,14 +107,43 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
                     break;
             }
         }
+        try {
+            //MyObservable obs2 = MyObservable.class.cast(obs);
+            MyObservable.UpdateReason reason = MyObservable.UpdateReason.class.cast(obj);
+            switch(reason.Reason){
+                case Pics_viewed:
+                    updatePicture(reason.Picture);
+                    break;
+                default:
+                    update();
+                    break;
+            }
+        } catch (ClassCastException e) {
+        }
+
         
     }
     public void registerToObserver(SrvPicManager obs) {
        obs.addObserver(this);
        update();
     }
+    public void updatePicture(DatPicture Pic) {
+        update();
+        ((DefaultListModel<String>) jList2.getModel()).clear();
+        for (int i = 0; i < Pic.Tags.size(); i++) {       
+            ((DefaultListModel<String>) jList2.getModel()).add(i, Pic.Tags.get(i).Text);
+            ((DefaultListModel<String>) jList1.getModel()).removeElement(Pic.Tags.get(i).Text);
+        }
+        
+        
+    }
     public void update() {
-        //Todo
+        ArrayList<DatTag> list = ModelPictures.getInstance().getAllTags();
+        ((DefaultListModel<String>) jList1.getModel()).clear();
+        for (int i = 0; i < list.size(); i++) {       
+            ((DefaultListModel<String>) jList1.getModel()).add(i, list.get(i).Text);
+        }        
+
     }
     /**
      * @param args the command line arguments

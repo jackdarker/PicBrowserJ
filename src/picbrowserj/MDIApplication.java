@@ -175,6 +175,7 @@ public class MDIApplication extends javax.swing.JFrame {
         FrmPictureInfo frmPicInfo = new FrmPictureInfo();
         frmPicInfo.setVisible(true);     
         frmPicInfo.registerToObserver(SrvPicManager.getInstance());
+        frmViewer.registerObserver(frmPicInfo);
     }
     /**
      * @param args the command line arguments

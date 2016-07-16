@@ -24,12 +24,19 @@ package picbrowserj;
  */
 public class DatTag {
     public DatTag(){
-        ID=-1;
+        IDListTags=-1;
+        IDTags=-1;
     }
-    
+    public DatTag(String Tag,String Group){
+        IDListTags=-1;
+        IDTags=-1;
+        Text = Tag;
+        TagGroup=Group;
+    }
     public String Text;
     public String TagGroup;
     public Boolean IsGroup;
-    public int ID;
+    public int IDListTags;
+    public int IDTags;
     
 }

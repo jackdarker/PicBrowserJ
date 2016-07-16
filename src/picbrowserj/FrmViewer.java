@@ -140,12 +140,25 @@ public class FrmViewer extends javax.swing.JFrame
         jList1.setListData(names);
 
     }
+    private MyObservable m_Observer= new MyObservable();
+    public void registerObserver (Observer listener) {
+        if (listener==null) return;
+        m_Observer.addObserver(listener);
+    }
+    public void unregisterObserver (Observer listener) {
+        if (listener==null) return;
+        m_Observer.deleteObserver(listener);
+    }
+    
     
     private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
         String Path="";
         Path=jList1.getSelectedValue();
-
+        DatPicture Pic =SrvPicManager.getInstance().getPicturesToView().get(jList1.getMinSelectionIndex());
         canvas1.showImage(Path);
+        MyObservable.UpdateReason reason;
+        reason = m_Observer.new UpdateReason(MyObservable.updateReasonEnum.Pics_viewed,Pic);
+        m_Observer.NotifyPicChanged(reason);
     }//GEN-LAST:event_jList1ValueChanged
 
     /**

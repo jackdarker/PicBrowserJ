@@ -81,7 +81,6 @@ public class ModelPictures {
           sql = "CREATE TABLE Pictures " +
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                        " Path           TEXT    NOT NULL, " + 
-                       " IDTags            INT     NOT NULL, " + 
                        " Name        CHAR(50), " + 
                        " Rating         REAL)"; 
           stmt.executeUpdate(sql);
@@ -105,21 +104,31 @@ public class ModelPictures {
         UpdateConfig("Version","",100);
         int v= GetConfigInt("Version");
         //Todo DB init goes here  //////////////////////////////////////
-        DatTag Tag= new DatTag();
+        DatTag Tag;
+        Tag= new DatTag();
         Tag.Text ="Animal";
         Tag.TagGroup="Animal";
         Tag.IsGroup=true;
         UpdateTags(Tag);
+        Tag= new DatTag();
         Tag.Text ="Deer";
+        Tag.TagGroup="Animal";
+        Tag.IsGroup=false;
+        UpdateTags(Tag);
+        Tag= new DatTag();
+        Tag.Text ="Fox";
         Tag.TagGroup="Animal";
         Tag.IsGroup=false;
         UpdateTags(Tag);
         DatPicture pic= new DatPicture();
         pic.Name ="";
         pic.Path="D:/furries/andere/1c.jpg";
+        pic.addTag(new DatTag("Deer","Animal"));
         UpdatePictures(pic);
+        pic = new DatPicture();
         pic.Name ="";
         pic.Path="D:/furries/andere/01.jpg";
+        pic.addTag(new DatTag("Fox","Animal"));
         UpdatePictures(pic);
         //////////////////////////////////////////////////////////////////
        } catch ( Exception e ) {
@@ -150,27 +159,47 @@ public class ModelPictures {
        }
        return Return; 
     }
+    private Boolean RefreshTagListID(DatTag Tag ) {
+        Statement stmt = null;
+        Boolean Update=false;
+        ResultSet rs;
+        try {
+            stmt = s_DBConn.createStatement();
+            rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags where Tag='"+Tag.Text+"';" );
+            while ( rs.next() ) {
+               Update=true;
+               Tag.IDListTags = rs.getInt("ID");
+            }
+            rs.close();
+            stmt.close();
+        } catch ( Exception e ) {
+          HandleDBError( e);
+        }    
+        return Update;
+    }
+//updates/creates entry in Tag-Dictionary
     private void UpdateTags(DatTag Tag) {
         Statement stmt = null;
         String sql="";
         Boolean Update=false;
         int id = -1;
         try {
-            stmt = s_DBConn.createStatement();
+          /*  stmt = s_DBConn.createStatement();
             ResultSet rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags where Tag='"+Tag.Text+"';" );
             while ( rs.next() ) {
                Update=true;
                id = rs.getInt("ID");
             }
             rs.close();
-            stmt.close();
+            stmt.close();*/
+          Update = RefreshTagListID(Tag);
             
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
         if(Update) {
             sql = "Update ListTags Set Tag='"+Tag.Text+
                     "',GroupX='"+Tag.TagGroup+
-                    "' where ID="+String.format("%d",id)+";";
+                    "' where ID="+String.format("%d",Tag.IDListTags)+";";
         } else {
             sql = "INSERT INTO ListTags (Tag,GroupX) " +
                      "VALUES ( '"+Tag.Text+"','"+Tag.TagGroup +"');"; 
@@ -182,34 +211,53 @@ public class ModelPictures {
        } catch ( Exception e ) {
           HandleDBError( e);
        }
+        Update = RefreshTagListID(Tag);
     }
-    private void UpdatePictures(DatPicture Pic) {
+    private Boolean RefreshPictureID(DatPicture Pic ) {
         Statement stmt = null;
-        String sql="";
         Boolean Update=false;
-
+        ResultSet rs;
         try {
             stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
+            rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
             while ( rs.next() ) {
                Update=true;
                Pic.ID = rs.getInt("ID");
             }
             rs.close();
             stmt.close();
+        } catch ( Exception e ) {
+          HandleDBError( e);
+        }    
+        return Update;
+    }
+    //updates/creates Picture-Entry
+    private void UpdatePictures(DatPicture Pic) {
+        Statement stmt = null;
+        String sql="";
+        Boolean Update=false;
+        ResultSet rs;
+        Update = RefreshPictureID(Pic);
+        try {
+         /*   stmt = s_DBConn.createStatement();
+            rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
+            while ( rs.next() ) {
+               Update=true;
+               Pic.ID = rs.getInt("ID");
+            }
+            rs.close();
+            stmt.close();*/
     
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
         if(Update) {
             sql = "Update Pictures Set Path='"+Pic.Path+
                     "',Name='"+Pic.Name+
-                    "',IDTags="+String.format("%d",Pic.IDTagList)+
-                    "',Rating="+String.format("%f",Pic.Rating)+
-                    "' where ID="+String.format("%d",Pic.ID)+";";
+                    "',Rating="+String.format("%d",Pic.Rating)+
+                    " where ID="+String.format("%d",Pic.ID)+";";
         } else {
-            sql = "INSERT INTO Pictures (Path,Name,IDTags,Rating) " +
+            sql = "INSERT INTO Pictures (Path,Name,Rating) " +
                      "VALUES ( '"+Pic.Path+"','"+Pic.Name +"',"+
-                    String.format("%d",Pic.IDTagList)+","+
                     String.format("%d",Pic.Rating)+");"; 
         
         }
@@ -220,37 +268,76 @@ public class ModelPictures {
        } catch ( Exception e ) {
           HandleDBError( e);
        }
+        Update = RefreshPictureID(Pic);
+        if (Pic.RequiresTagUpload()) UpdatePictureTags(Pic);
     }
+    private Boolean RefreshTagID(DatTag Tag, DatPicture Pic ) {
+        Statement stmt = null;
+        Boolean Update=false;
+        ResultSet rs;
+        try {
+            stmt = s_DBConn.createStatement();
+            rs = stmt.executeQuery( "SELECT ID FROM Tags where IDListTags="+Tag.IDListTags+
+                       " and IDPicture="+ Pic.ID +";" );
+               while ( rs.next() ) {
+                    //Update=true;
+                    Tag.IDTags = rs.getInt("ID");
+               }
+            rs.close();
+            stmt.close();
+        } catch ( Exception e ) {
+          HandleDBError( e);
+        }    
+        return Update;
+    }
+    //updates the tags of a picture, creates tags if necessary
     private void UpdatePictureTags(DatPicture Pic) {
         Statement stmt = null;
         String sql="";
-        Boolean Update=false;
+        int TagID;
+        int PicID;
+        ResultSet rs;
         try {
-            stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID FROM Tags where IDListTags="+Pic.IDTagList+";" );
-            while ( rs.next() ) {
-               Update=true;
-            Arraylist durchlaufen   Pic.IDTagList = rs.getInt("ID");
-            }
-            rs.close();
-            stmt.close();
-
+            //PicID should already be set
+            PicID = Pic.ID;
+            assert(PicID>=0);
+           //stmt = s_DBConn.createStatement();
+           for(int i=0; i< Pic.Tags.size();i++) {
+               UpdateTags(Pic.Tags.get(i));
+               TagID = Pic.Tags.get(i).IDListTags; // should now have ID
+               assert(TagID>=0);
+               RefreshTagID(Pic.Tags.get(i),Pic);
+              /* rs = stmt.executeQuery( "SELECT ID FROM Tags where IDListTags="+TagID+
+                       " and IDPicture="+ PicID +";" );
+               while ( rs.next() ) {
+                    //Update=true;
+                    Pic.Tags.get(i).IDTags = rs.getInt("ID");
+               }
+               rs.close();*/
+           }
+           //stmt.close();
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
-        if(Update) {
-            sql = "Update Tags Set IDPicture="+String.format("%d",Pic.ID)+
-                    " where ID="+String.format("%d",Pic.IDTagList)+";";
-        } else {
-            sql = "INSERT INTO Tags (IDListTags,IDPicture) " +
-                     "VALUES ("+
-                    String.format("%d",Pic.IDTagList)+","+
-                    String.format("%d",Pic.ID)+");"; 
-        
+        for(int i=0; i< Pic.Tags.size();i++) {
+            TagID = Pic.Tags.get(i).IDTags;
+            if(TagID>=0) {
+                sql = "Update Tags Set IDPicture="+String.format("%d",Pic.ID)+
+                        ",IDListTags=" +String.format("%d",Pic.Tags.get(i).IDListTags)+
+                        " where ID="+String.format("%d",TagID)+";";
+            } else {
+                sql = "INSERT INTO Tags (IDListTags,IDPicture) " +
+                         "VALUES ("+
+                        String.format("%d",Pic.Tags.get(i).IDListTags)+","+
+                        String.format("%d",Pic.ID)+");"; 
+
+            }
+            stmt.executeUpdate(sql);
         }
-        stmt.executeUpdate(sql);
         stmt.close();
         s_DBConn.commit();
-
+        for(int i=0; i< Pic.Tags.size();i++) {
+            RefreshTagID(Pic.Tags.get(i),Pic);
+        }
        } catch ( Exception e ) {
           HandleDBError( e);
        }
@@ -294,19 +381,36 @@ public class ModelPictures {
         Statement stmt = null;
         String sql="";
         DatPicture Pic;
+        DatTag Tag;
         try {
             stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID,Path,Name,IDTags,Rating From Pictures;" );
+            //loading pictures
+            ResultSet rs = stmt.executeQuery( "SELECT ID,Path,Name,Rating From Pictures;" );
             while ( rs.next() ) {
                 Pic= new DatPicture();
                 Pic.ID= rs.getInt("ID");
                 Pic.Name =rs.getString("Name");
                 Pic.Path=rs.getString("Path");
-                Pic.IDTagList = rs.getInt("IDTags");
-                Pic.Rating = rs.getDouble("Rating");
+                Pic.Rating = rs.getInt("Rating");
                 s_Pictures.add(Pic);
             }
             rs.close();
+            //loading tags for pictures
+            for(int i=0; i< s_Pictures.size();i++) {
+                rs = stmt.executeQuery( "SELECT Tags.ID,Tags.IDListTags,Tag,GroupX "+
+                        "From Tags inner join ListTags on Tags.IDListTags=ListTags.ID where Tags.IDPicture="+
+                        s_Pictures.get(i).ID +";" );
+                while ( rs.next() ) {
+                    Tag = new DatTag();
+                    Tag.IDListTags = rs.getInt("IDListTags");
+                    Tag.IDTags = rs.getInt("ID");
+                    Tag.Text = rs.getString("Tag");
+                    Tag.TagGroup = rs.getString("GroupX");
+                    Tag.IsGroup = (Tag.Text==Tag.TagGroup);
+                    s_Pictures.get(i).Tags.add(Tag);
+                }
+                rs.close();
+            }
             stmt.close();
         
        } catch ( Exception e ) {
@@ -327,7 +431,7 @@ public class ModelPictures {
             ResultSet rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags;" );
             while ( rs.next() ) {
                 Tag= new DatTag();
-                Tag.ID= rs.getInt("ID");
+                Tag.IDListTags= rs.getInt("ID");
                 Tag.Text =rs.getString("Tag");
                 Tag.TagGroup=rs.getString("GroupX");
                 Tag.IsGroup= (Tag.Text==Tag.TagGroup);

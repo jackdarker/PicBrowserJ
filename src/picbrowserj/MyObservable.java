@@ -17,34 +17,29 @@
  */
 package picbrowserj;
 
-import java.util.ArrayList;
+import java.util.Observable;
 
 /**
- *stores information for a picture
+ *
  * @author jkhome
  */
-public class DatPicture {
+public class MyObservable extends Observable{
     
-    public DatPicture(){
-        ID = -1;
-        Tags = new ArrayList<>();
+    public void NotifyPicChanged(UpdateReason Reason) {
+            this.setChanged();
+            this.notifyObservers(Reason);
     }
-    
-    public String Path;
-    public String Name;
-    public int ID;
-    public int Rating;
-    public ArrayList<DatTag> Tags;
-    
-    public void addTag(DatTag obj) {
-        Tags.add(obj);
+    public enum updateReasonEnum {
+        Pics_added, Pics_moved, Pics_viewed; 
     }
-    public Boolean RequiresTagUpload() {
-        Boolean _ret=false;
-        for(int i=0; i< Tags.size();i++) {
-            _ret= !(Tags.get(i).IDListTags>=0 && Tags.get(i).IDTags>=0);
+    public class UpdateReason {
+        public updateReasonEnum Reason;
+        public DatPicture Picture=null;
+        public UpdateReason(updateReasonEnum reason, DatPicture Pic) {
+            Picture = Pic;
+            Reason = reason;
+            
         }
-        return _ret;
+
     }
-    
 }
