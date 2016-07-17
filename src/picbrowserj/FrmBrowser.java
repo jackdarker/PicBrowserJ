@@ -17,14 +17,17 @@ import java.util.List;
 import java.util.Observer;
 import java.util.Observable;
 import javax.swing.SwingUtilities;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
 /**
  *
  * @author homeadmin
  */
 public class FrmBrowser extends javax.swing.JInternalFrame 
-    implements Observer {
+    implements Observer,TreeSelectionListener {
 
     /**
      * Creates new form FrmBrowser
@@ -36,14 +39,27 @@ public class FrmBrowser extends javax.swing.JInternalFrame
           true, //maximizable
           true);//iconifiablesuper("Document #" + (++openFrameCount),
           initComponents();
+           jTree1.getSelectionModel().setSelectionMode
+            (TreeSelectionModel.SINGLE_TREE_SELECTION);
+            //Listen for when the selection changes.
+            jTree1.addTreeSelectionListener(this);
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+               
                 updatePicList();
             }
           });
     }
 
+    @Override
+    public void valueChanged(TreeSelectionEvent e) {
+        Object _Obj = e.getNewLeadSelectionPath().getLastPathComponent();
+        DefaultMutableTreeNode _Node = DefaultMutableTreeNode.class.cast(_Obj);
+        FileNode userObject = FileNode.class.cast(_Node.getUserObject());
+        String _Path= userObject.getFile().getAbsolutePath();
+        //_path = e.newLeadSelectionPath.lastPathComponent.userObject.file.path;
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -97,7 +113,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 294, Short.MAX_VALUE))
+                .addGap(0, 616, Short.MAX_VALUE))
             .addComponent(jSplitPane1)
         );
         layout.setVerticalGroup(
@@ -105,8 +121,8 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 349, Short.MAX_VALUE)
+                .addGap(0, 25, Short.MAX_VALUE))
         );
 
         pack();
@@ -189,6 +205,9 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
         private File file;
 
+        public File getFile() {
+            return file;
+        }
         public FileNode(File file) {
             this.file = file;
         }
@@ -218,7 +237,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
        Path dir = Paths.get(Root);
        //Path dir = Paths.get("D:/furries/andere");
        
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir,"*.{jpg,gif}")) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir,"*.{jpg,gif,png,bmp}")) {
         for (Path file: stream) {
         System.out.println(file.getFileName());
             _Files.add(file.getFileName().toString());
