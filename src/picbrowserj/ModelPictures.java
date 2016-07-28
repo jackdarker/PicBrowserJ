@@ -28,10 +28,12 @@ public class ModelPictures {
     private static Connection s_DBConn;
     private static ArrayList<DatTag> s_Tags;
     private static ArrayList<DatPicture> s_Pictures;
+    private static ArrayList<DatPicture> s_PicturesNew;
     
     private ModelPictures() {
-        s_Tags = new ArrayList<>();
-        s_Pictures = new ArrayList<>();        
+        s_Tags = new ArrayList<DatTag>();
+        s_Pictures = new ArrayList<DatPicture>();      
+        s_PicturesNew = new ArrayList<DatPicture>();    
         InitDB();
         LoadTags();
         LoadPictures();
@@ -102,6 +104,8 @@ public class ModelPictures {
           }
         
         UpdateConfig("Version","",100);
+        // Todo set on FirstRun
+        UpdateConfig("Store","C:/temp/Pics",0);
         int v= GetConfigInt("Version");
         //Todo DB init goes here  //////////////////////////////////////
         DatTag Tag;
@@ -121,13 +125,13 @@ public class ModelPictures {
         Tag.IsGroup=false;
         UpdateTags(Tag);
         DatPicture pic= new DatPicture();
-        pic.Name ="";
-        pic.Path="D:/furries/andere/1c.jpg";
+        pic.Name ="90025-414.JPG";
+        pic.Path="C:/Projects/Porsche_KBE/E1030342_20160713_PC_Porsche KBE 9X1 EOL/PROGRAM/OBJ_DATA/90025-414.JPG";
         pic.addTag(new DatTag("Deer","Animal"));
         UpdatePictures(pic);
         pic = new DatPicture();
-        pic.Name ="";
-        pic.Path="D:/furries/andere/01.jpg";
+        pic.Name ="90025-417.JPG";
+        pic.Path="C:/Projects/Porsche_KBE/E1030342_20160713_PC_Porsche KBE 9X1 EOL/PROGRAM/OBJ_DATA/90025-417.JPG";
         pic.addTag(new DatTag("Fox","Animal"));
         UpdatePictures(pic);
         //////////////////////////////////////////////////////////////////
@@ -141,7 +145,7 @@ public class ModelPictures {
     }
     private int GetConfigInt(String Name) {
         Statement stmt = null;
-        String sql="";
+        String sql;
         int Return=0;
         Boolean Exists=false;
         try {
@@ -151,6 +155,26 @@ public class ModelPictures {
                 //Todo fix non exist
                Exists=true;
                Return = rs.getInt("ValueInt");
+            }
+            rs.close();
+            stmt.close();
+        }catch ( Exception e ) {
+          HandleDBError( e);
+       }
+       return Return; 
+    }
+    private String GetConfigString(String Name) {
+        Statement stmt = null;
+        String sql;
+        String Return="";
+        Boolean Exists=false;
+        try {
+            stmt = s_DBConn.createStatement();
+            ResultSet rs = stmt.executeQuery( "SELECT ID,Name,ValueText,ValueInt FROM Config;" );
+            while ( rs.next() ) {
+                //Todo fix non exist
+               Exists=true;
+               Return = rs.getString("ValueString");
             }
             rs.close();
             stmt.close();
@@ -239,14 +263,6 @@ public class ModelPictures {
         ResultSet rs;
         Update = RefreshPictureID(Pic);
         try {
-         /*   stmt = s_DBConn.createStatement();
-            rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
-            while ( rs.next() ) {
-               Update=true;
-               Pic.ID = rs.getInt("ID");
-            }
-            rs.close();
-            stmt.close();*/
     
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
@@ -377,7 +393,7 @@ public class ModelPictures {
        }
     }
     private void LoadPictures() {    
-        s_Pictures = new ArrayList<>();
+        s_Pictures = new ArrayList<DatPicture>();
         Statement stmt = null;
         String sql="";
         DatPicture Pic;
@@ -418,11 +434,24 @@ public class ModelPictures {
        }
         
     }
+    public void SavePicture(DatPicture Pic) {
+        UpdatePictures(Pic);
+    }
     public ArrayList<DatPicture> getAllPicture() {    
         return  s_Pictures;
     }
+    public ArrayList<DatPicture> getNewPictures() {    
+        return  s_PicturesNew;
+    }
+    /// Adds a newly selected Picture to the unsaved-Picture List
+    /// If the Picture is already in the list, it is replaced
+    /// If the Picture is already in DB it is ignored
+    public void AddNewPicture(DatPicture Pic) {
+        //Todo ??
+        s_PicturesNew.add(Pic);
+    }
     private void LoadTags() {
-        s_Tags = new ArrayList<>();
+        s_Tags = new ArrayList<DatTag>();
         Statement stmt = null;
         String sql="";
         DatTag Tag;

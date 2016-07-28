@@ -30,13 +30,19 @@ public class MyObservable extends Observable{
             this.notifyObservers(Reason);
     }
     public enum updateReasonEnum {
-        Pics_added, Pics_moved, Pics_viewed; 
+        Pics_added, Pics_moved, Pics_viewed, Pics_new; 
     }
     public class UpdateReason {
         public updateReasonEnum Reason;
         public DatPicture Picture=null;
+        public String Source ="";
         public UpdateReason(updateReasonEnum reason, DatPicture Pic) {
             Picture = Pic;
+            Reason = reason;
+            
+        }
+        public UpdateReason(updateReasonEnum reason, String File) {
+            Source = File;
             Reason = reason;
             
         }

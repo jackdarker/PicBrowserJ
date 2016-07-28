@@ -99,8 +99,8 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
     public void update(Observable obs, Object obj)
     {
         if(obs==SrvPicManager.getInstance()) {
-            SrvPicManager.updateReason reason= (SrvPicManager.updateReason)obj;
-            switch(reason){
+            MyObservable.UpdateReason reason= (MyObservable.UpdateReason)obj;
+            switch(reason.Reason){
                 case Pics_added:
                 default:
                     update();

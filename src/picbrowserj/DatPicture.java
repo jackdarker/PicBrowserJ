@@ -27,14 +27,17 @@ public class DatPicture {
     
     public DatPicture(){
         ID = -1;
-        Tags = new ArrayList<>();
     }
-    
+    public DatPicture(String path, String name){
+        ID = -1;
+        Path = path;
+        Name = name;        
+    }
     public String Path;
     public String Name;
     public int ID;
     public int Rating;
-    public ArrayList<DatTag> Tags;
+    public ArrayList<DatTag> Tags=new ArrayList<DatTag>();
     
     public void addTag(DatTag obj) {
         Tags.add(obj);
@@ -44,6 +47,12 @@ public class DatPicture {
         for(int i=0; i< Tags.size();i++) {
             _ret= !(Tags.get(i).IDListTags>=0 && Tags.get(i).IDTags>=0);
         }
+        return _ret;
+    }
+    
+    @Override
+    public String toString() {
+        String _ret = ((ID>0)?"":"* ") +   Name;
         return _ret;
     }
     

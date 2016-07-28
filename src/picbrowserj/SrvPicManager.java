@@ -7,18 +7,19 @@ package picbrowserj;
 
 import java.util.ArrayList;
 import java.util.Observable;
+import java.util.Observer;
 
 /**
  *
  * @author jkhome
  */
-public class SrvPicManager extends Observable{
+public class SrvPicManager extends Observable implements Observer{
     private static ArrayList<InterfaceSrvObserver> s_Observers;
     //private static ArrayList<String> s_Pictures;
     
     private static SrvPicManager s_Instance;
     private SrvPicManager() {
-        s_Observers = new ArrayList<>();
+        s_Observers = new ArrayList<InterfaceSrvObserver>();
         ModelPictures.init();
     }
     private void do_update () {
@@ -51,6 +52,24 @@ public class SrvPicManager extends Observable{
     public ArrayList<DatPicture> getPicturesToView() {
         return ModelPictures.getInstance().getAllPicture();
     }
+   @Override
+   public void update(Observable obs, Object obj)
+   {
+       try {
+            MyObservable.UpdateReason reason = MyObservable.UpdateReason.class.cast(obj);
+            switch(reason.Reason){
+                case Pics_new:
+                   // updatePicture(reason.Picture);
+                    ModelPictures.getInstance().AddNewPicture(reason.Picture);
+                    this.setChanged();
+                    this.notifyObservers(reason);
+                    break;
+                default:
+                    break;
+            }
+        } catch (ClassCastException e) {
+        }
+   }
     public void registerObserver (InterfaceSrvObserver listener) {
         if (listener==null) return;
         if (s_Observers.contains(listener)) return;
@@ -61,13 +80,17 @@ public class SrvPicManager extends Observable{
             s_Observers.remove(listener);
         }
     }
+    MyObservable MyObs = new MyObservable();
     private void loadData(){
         
+        MyObservable.UpdateReason reason;
+        reason = MyObs.new UpdateReason(MyObservable.updateReasonEnum.Pics_added,"");
         this.setChanged();
-        this.notifyObservers(updateReason.Pics_added);
+        this.notifyObservers(reason);
     }
     
-    public enum updateReason {
-        Pics_added, Pics_moved; 
+    public void SavePicture(DatPicture Pic) {
+        ModelPictures.getInstance().SavePicture(Pic);
     }
+    
 }
