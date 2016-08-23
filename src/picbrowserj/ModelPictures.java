@@ -104,6 +104,45 @@ public class ModelPictures {
           }
         
         UpdateConfig("Version","",100);
+        createTestData();
+        //////////////////////////////////////////////////////////////////
+       } catch ( Exception e ) {
+          HandleDBError( e);
+       }
+    }
+    private void createTestData(){
+        // Todo set on FirstRun
+        UpdateConfig("Store","d:/temp",0);
+        int v= GetConfigInt("Version");
+        //Todo DB init goes here  //////////////////////////////////////
+        DatTag Tag;
+        Tag= new DatTag();
+        Tag.Text ="Animal";
+        Tag.TagGroup="Animal";
+        Tag.IsGroup=true;
+        UpdateTags(Tag);
+        Tag= new DatTag();
+        Tag.Text ="Deer";
+        Tag.TagGroup="Animal";
+        Tag.IsGroup=false;
+        UpdateTags(Tag);
+        Tag= new DatTag();
+        Tag.Text ="Fox";
+        Tag.TagGroup="Animal";
+        Tag.IsGroup=false;
+        UpdateTags(Tag);
+        DatPicture pic= new DatPicture();
+        pic.Name ="20150628_115213.jpg";
+        pic.Path="D:/temp/artists/artists3/20150628_115213.jpg";
+        pic.addTag(new DatTag("Deer","Animal"));
+        UpdatePictures(pic);
+        pic = new DatPicture();
+        pic.Name ="TPhoto_00001.jpg";
+        pic.Path="D:/temp/artists/artists3/TPhoto_00001.jpg";
+        pic.addTag(new DatTag("Fox","Animal"));
+        UpdatePictures(pic);
+    }
+    private void createTestData1(){
         // Todo set on FirstRun
         UpdateConfig("Store","C:/temp/Pics",0);
         int v= GetConfigInt("Version");
@@ -134,10 +173,6 @@ public class ModelPictures {
         pic.Path="C:/Projects/Porsche_KBE/E1030342_20160713_PC_Porsche KBE 9X1 EOL/PROGRAM/OBJ_DATA/90025-417.JPG";
         pic.addTag(new DatTag("Fox","Animal"));
         UpdatePictures(pic);
-        //////////////////////////////////////////////////////////////////
-       } catch ( Exception e ) {
-          HandleDBError( e);
-       }
     }
     private void HandleDBError( Exception e) {
         System.err.println( e.getClass().getName() + ": " + e.getMessage() );

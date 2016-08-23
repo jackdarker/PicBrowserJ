@@ -7,6 +7,10 @@ package picbrowserj;
 
 import java.awt.Image;
 import static java.awt.Image.SCALE_SMOOTH;
+import java.awt.Rectangle;
+import java.awt.event.ItemEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryIteratorException;
@@ -23,6 +27,9 @@ import java.util.Observable;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -36,16 +43,25 @@ import javax.swing.tree.TreeSelectionModel;
 public class FrmBrowser extends javax.swing.JInternalFrame 
     implements Observer,TreeSelectionListener {
 
+
     /**
      * Creates new form FrmBrowser
      */
     public FrmBrowser() {
-        super("Document #" ,
+        super("FrmBrowser" ,
           true, //resizable
           true, //closable
           true, //maximizable
           true);//iconifiablesuper("Document #" + (++openFrameCount),
           initComponents();
+          this.addInternalFrameListener(new InternalFrameAdapter() {
+            public void InternalFrameClosed(WindowEvent e) {
+               saveLayout();
+           }
+            public void InternalFrameIconified(WindowEvent e) {
+                saveLayout();
+            }
+           });
            jTree1.getSelectionModel().setSelectionMode
             (TreeSelectionModel.SINGLE_TREE_SELECTION);
             //Listen for when the selection changes.
@@ -56,6 +72,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
                 updateBrowserTree();
             }
           });
+          restoreLayout();
           jList1.setCellRenderer(new ListCellRendererPicture(Icons));
           jList1.setModel(MyList);
           toggleMode();
@@ -69,18 +86,21 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             FileNode userObject = FileNode.class.cast(_Node.getUserObject());
          //_path = e.newLeadSelectionPath.lastPathComponent.userObject.file.path;
             String _Path= userObject.getFile().getAbsolutePath();      
-            updateFileList(_Path,0);
+            updateFileList(_Path,1);
         } else if (_Node.getUserObject().getClass()==DatPicture.class) {
             DatPicture userObject2 = DatPicture.class.cast(_Node.getUserObject());
             
         }
-        ////////////////////////
-        /*DatPicture _Pic = new DatPicture();
-        _Pic.Path= _Path;
-        _Pic.Name = userObject.getFile().getName();
-        MyObservable.UpdateReason reason;
-        reason = m_Observer.new UpdateReason(MyObservable.updateReasonEnum.Pics_new,_Pic);
-        m_Observer.NotifyPicChanged(reason);*/
+
+    }
+    private void saveLayout() {
+        SaveLoadSettings.getInstance().SetRect(getTitle(), getBounds());
+    }
+    private void restoreLayout() {
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle());
+        if(Rect!=null) {
+            this.setBounds(Rect);
+        }
     }
     private MyObservable m_Observer= new MyObservable();
     public void registerObserver (Observer listener) {
@@ -106,13 +126,14 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         jButton2 = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<DatPicture>();
+        jList1 = new javax.swing.JList<>();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTree1 = new javax.swing.JTree();
         jToolBar3 = new javax.swing.JToolBar();
-        jComboBox1 = new javax.swing.JComboBox<String>();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        jComboBox1 = new javax.swing.JComboBox<>();
+        jButton3 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
@@ -147,6 +168,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         jList1.setDropMode(javax.swing.DropMode.INSERT);
         jList1.setFixedCellHeight(200);
         jList1.setFixedCellWidth(400);
+        jList1.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 jList1ValueChanged(evt);
@@ -158,21 +180,59 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
         jTree1.setShowsRootHandles(true);
         jTree1.setToggleClickCount(1);
+        jTree1.addTreeExpansionListener(new javax.swing.event.TreeExpansionListener() {
+            public void treeCollapsed(javax.swing.event.TreeExpansionEvent evt) {
+            }
+            public void treeExpanded(javax.swing.event.TreeExpansionEvent evt) {
+                jTree1TreeExpanded(evt);
+            }
+        });
         jScrollPane2.setViewportView(jTree1);
 
         jSplitPane1.setLeftComponent(jScrollPane2);
 
         jToolBar3.setRollover(true);
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBox1.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                jComboBox1ItemStateChanged(evt);
+            }
+        });
+        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox1ActionPerformed(evt);
+            }
+        });
         jToolBar3.add(jComboBox1);
-        jToolBar3.add(filler1);
 
-        jButton5.setText("jButton5");
+        jButton3.setText("<<");
+        jButton3.setActionCommand("btPrevPage");
+        jButton3.setFocusable(false);
+        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jToolBar3.add(jButton3);
+        jButton3.getAccessibleContext().setAccessibleName("btPrevPage");
+
+        jButton5.setText(">>");
         jButton5.setFocusable(false);
         jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton5.setSelected(true);
         jButton5.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
         jToolBar3.add(jButton5);
+        jButton5.getAccessibleContext().setAccessibleName("btNextPage");
+
+        jToolBar3.add(filler1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -180,9 +240,10 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jToolBar3, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE))
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGap(29, 29, 29)
+                .addComponent(jToolBar3, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
+                .addContainerGap())
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -191,7 +252,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
                     .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jToolBar3, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE))
         );
 
         pack();
@@ -213,6 +274,37 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         toggleMode();
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void jTree1TreeExpanded(javax.swing.event.TreeExpansionEvent evt) {//GEN-FIRST:event_jTree1TreeExpanded
+        Object _Obj = evt.getPath().getLastPathComponent();
+        DefaultMutableTreeNode _Node = DefaultMutableTreeNode.class.cast(_Obj);
+        if (_Node.getUserObject().getClass()== FileNode.class) {
+            updateBrowserTree(_Node);
+        }
+        
+    }//GEN-LAST:event_jTree1TreeExpanded
+
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+
+    }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        int i = jComboBox1.getSelectedIndex()+1;
+        i = Math.max(1, i-1);
+        updateFileList(m_Root,i);
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        int i = jComboBox1.getSelectedIndex()+1;
+        i = Math.max(1, i+1);
+        updateFileList(m_Root,i);
+    }//GEN-LAST:event_jButton5ActionPerformed
+    Integer m_Page;
+    private void jComboBox1ItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jComboBox1ItemStateChanged
+       if (evt.getStateChange()==ItemEvent.DESELECTED) return; 
+       if (jComboBox1.getSelectedIndex()+1==m_Page) return;
+       //updateFileList(m_Root,jComboBox1.getSelectedIndex()+1);
+    }//GEN-LAST:event_jComboBox1ItemStateChanged
+
     private boolean m_DirMode;
     private void toggleMode() {
         m_DirMode = !m_DirMode;
@@ -231,67 +323,93 @@ public class FrmBrowser extends javax.swing.JInternalFrame
    public void registerToObserver(SrvPicManager obs) {
        obs.addObserver(this);
    } 
-//TODO create Images asynchronly
+   
+String m_Root;
+//create Images asynchronly
 void updateFileList(String Root, int Page) {
+    m_Root = Root;
+    m_Page = Page;
        MyList.clear();
        Icons.clear();
        Path dir =  Paths.get(Root);
+       
+    //double check page-selection
+    //m_Page = Math.min(Math.abs(MyList.size()/m_PicsPerPage)+1,m_Page);
+   // m_Page = Math.max(1,m_Page);
+       int i =0;
        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir,"*.{jpg,gif,png,bmp}")) {
         for (Path file: stream) {
-          /*  image1 = new ImageIcon(file.toString()).getImage();
-            // Todo put in function for this
-            //scale image but maintain ratio
-            float height1=image1.getHeight(null);
-            float height2 =200;  // Icon-Size
-            float width1 = image1.getWidth(null);
-            float width2= height2;
-            if (height2/height1 < width2/width1) {
-                image = image1.getScaledInstance(-1,(int)height2, SCALE_SMOOTH);
-            } else {
-                image = image1.getScaledInstance((int)width2, -1, SCALE_SMOOTH);
-            }*/
-            Icons.put(file.getFileName().toString(), new ImageIcon("resources/None.png"));
-            MyList.addElement(new DatPicture(file.toString(),file.getFileName().toString()));
+            if (i>= (Page-1)*m_PicsPerPage &&
+                   i< (Page)*m_PicsPerPage  ) {
+                Icons.put(file.getFileName().toString(), new ImageIcon("resources/None.png"));
+                MyList.addElement(new DatPicture(file.toString(),file.getFileName().toString()));
+            }
+            i++;
         }
+        
+        int k= Math.max(Math.abs((i+1)/m_PicsPerPage)+1, 1);
+        jComboBox1.removeAllItems();
+        for(i=1;i<=k;i++) {
+            jComboBox1.addItem(String.valueOf(i));
+        }
+        jComboBox1.setSelectedItem(String.valueOf(Page));
         
         } catch (IOException | DirectoryIteratorException x) {
         // IOException can never be thrown by the iteration.
         // In this snippet, it can only be thrown by newDirectoryStream.
         System.err.println(x);
         }
-       CreateIcons ci = new CreateIcons();
-            new Thread(ci).start();
+       
+       runCreateIcons();
        
     }
    private void updateBrowserTree() {
        DefaultMutableTreeNode root;
-       File fileRoot = new File("C:/temp/");
         root = new DefaultMutableTreeNode("Root");
         treeModelDb.setRoot(root);
         CreateChildNodesDB ccn = 
                 new CreateChildNodesDB(root);
         new Thread(ccn).start();
         
-        root = new DefaultMutableTreeNode(new FileNode(fileRoot));
+        root = new DefaultMutableTreeNode(new RootNode());
         treeModelDir.setRoot(root);
         CreateChildNodes ccn2 = 
-                new CreateChildNodes(fileRoot, root);
+                new CreateChildNodes( treeModelDir,root);
         new Thread(ccn2).start();
+   }
+   private void updateBrowserTree(DefaultMutableTreeNode node) {
+       CreateChildNodes ccn2 = 
+                new CreateChildNodes(treeModelDir, node);
+        new Thread(ccn2).start();
+       
    }
    private Map<String, ImageIcon> Icons = new HashMap<>();
    private DefaultListModel<DatPicture> MyList = new DefaultListModel<>();
    
     private DefaultTreeModel treeModelDir = new DefaultTreeModel(null);
     private DefaultTreeModel treeModelDb = new DefaultTreeModel(null);
+    
+    public void runCreateIcons() {
+        CreateIcons ci = new CreateIcons();
+        new Thread(ci).start();
+    }
+    int m_PicsPerPage=40;
     public class CreateIcons implements Runnable {
-        public CreateIcons() { }
+        public CreateIcons() { 
+        }
 
         @Override
         public void run() {
             Image image;
             Image image1;
             //Update Icon 
-            for (int i=0;i<MyList.size();i++) {
+            /*
+            int i= (m_Page-1)*m_PicsPerPage;
+            int k = (m_Page)*m_PicsPerPage;
+            k= Math.min(MyList.size(), k);*/
+            int i=0;
+            int k= MyList.size();
+            for (;i<k;i++) {
                 image1 = new ImageIcon(MyList.get(i).Path).getImage();
                 // Todo put in function for this
                 //scale image but maintain ratio
@@ -307,39 +425,58 @@ void updateFileList(String Root, int Page) {
                 Icons.put(MyList.get(i).Name, new ImageIcon(image));
                 jList1.repaint();
             }
-
-
+           /* k= Math.max(Math.abs(MyList.size()/m_PicsPerPage)+1, 1);
+            String page;
+            jComboBox1.removeAllItems();
+            for(i=1;i<=k;i++) {
+                page = String.valueOf(i);
+                jComboBox1.addItem(String.valueOf(m_Page));
+            }
+            jComboBox1.setSelectedItem(String.valueOf(m_Page));*/
         }
     }
     public class CreateChildNodes implements Runnable {
 
         private DefaultMutableTreeNode root;
-        private File fileRoot;
+        DefaultTreeModel Tree;
 
-        public CreateChildNodes(File fileRoot, 
+        public CreateChildNodes(DefaultTreeModel tree, 
                 DefaultMutableTreeNode root) {
-            this.fileRoot = fileRoot;
+            this.Tree= tree;
             this.root = root;
+            
         }
 
         @Override
         public void run() {
-            createChildren(fileRoot, root);
+            createChildren( root);
         }
 
-        private void createChildren(File fileRoot,DefaultMutableTreeNode node) {
-            File[] files = fileRoot.listFiles();
-            if (files == null) return;
-            //Todo breadth first instead depth first
+        private void createChildren(DefaultMutableTreeNode node) {
+            File[] files=null;
+            if (node.getUserObject().getClass()== FileNode.class) {
+             files = ((FileNode)node.getUserObject()).getFile().listFiles();
+            } else if (node.getUserObject().getClass()== RootNode.class) {
+              files= File.listRoots();
+            }
+            if (files == null)
+                return;
+            node.removeAllChildren();
+            DefaultMutableTreeNode childNode;
+            
             for (File file : files) {
-                DefaultMutableTreeNode childNode = 
-                        new DefaultMutableTreeNode(new FileNode(file));
-                //node.add(childNode);
+                
                 if (file.isDirectory()) {
+                    childNode = new DefaultMutableTreeNode(new FileNode(file));                    
                     node.add(childNode);
-                    createChildren(file, childNode);
+                    //add dummy node to make node expandable
+                    childNode.add(new DefaultMutableTreeNode());
+                    //Node-childs will be updated on ExpandNodeEvent
+                   // createChildren(childNode);
                 }
             }
+            Tree.nodeStructureChanged(node);
+            
         }
 
     }
@@ -369,18 +506,22 @@ void updateFileList(String Root, int Page) {
         }
 
     }
-    
+    public class RootNode {
+        public RootNode() {  
+        }
+        @Override
+        public String toString() {
+            return "ROOT";
+        }
+    }
     public class FileNode {
-
         private File file;
-
         public File getFile() {
             return file;
         }
         public FileNode(File file) {
-            this.file = file;
+                this.file = file;    
         }
-
         @Override
         public String toString() {
             String name = file.getName();
@@ -391,21 +532,13 @@ void updateFileList(String Root, int Page) {
             }
         }
     }
-    ////////////////////////
-   pFileIterator FileIterator = new pFileIterator ();
-   private class pFileIterator {
-        String m_LastDir;
-        int m_PicsPerPage=40;
-    void updateDirectoryTree(String Root) {
-     
-    }   
 
-   }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.Box.Filler filler1;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton5;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JList<DatPicture> jList1;

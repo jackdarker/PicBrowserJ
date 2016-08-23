@@ -30,7 +30,10 @@ public class MyObservable extends Observable{
             this.notifyObservers(Reason);
     }
     public enum updateReasonEnum {
-        Pics_added, Pics_moved, Pics_viewed, Pics_new; 
+        Pics_added, //Picture loaded for browsing
+        Pics_moved, 
+        Pics_viewed, //Picture selected for viewing
+        Pics_new; 
     }
     public class UpdateReason {
         public updateReasonEnum Reason;

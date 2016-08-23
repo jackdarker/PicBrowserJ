@@ -5,11 +5,15 @@
  */
 package picbrowserj;
 
+import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
 
 /**
  *
@@ -24,8 +28,26 @@ public class FrmViewer extends javax.swing.JFrame
     public FrmViewer() {
         initComponents();
         jList1.setModel(MyList);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            saveLayout();
+        }
+        });
     }
 
+    private void saveLayout() {
+        SaveLoadSettings.getInstance().SetRect(
+                this.getClass().getName(), getBounds());
+    }
+    private void restoreLayout() {
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(
+                this.getClass().getName());
+        if(Rect!=null) {
+            this.setBounds(Rect);
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -73,6 +95,11 @@ public class FrmViewer extends javax.swing.JFrame
         jSplitPane1.setDividerLocation(150);
 
         canvas1.setAlignmentX(1.0F);
+        canvas1.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                canvas1ComponentResized(evt);
+            }
+        });
 
         javax.swing.GroupLayout canvas1Layout = new javax.swing.GroupLayout(canvas1);
         canvas1.setLayout(canvas1Layout);
@@ -131,7 +158,12 @@ public class FrmViewer extends javax.swing.JFrame
         DatPicture Pic =(DatPicture) jList1.getModel().getElementAt( jList1.getMaxSelectionIndex());
         SrvPicManager.getInstance().SavePicture(Pic);
     }//GEN-LAST:event_jButton1ActionPerformed
-    
+
+    private void canvas1ComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_canvas1ComponentResized
+       if(DeferResize) return;
+       canvas1.rescaleImage();
+    }//GEN-LAST:event_canvas1ComponentResized
+    private boolean DeferResize=false;    
     @Override
     public void update(Observable obs, Object obj)
     {
@@ -140,7 +172,7 @@ public class FrmViewer extends javax.swing.JFrame
             switch(reason.Reason){
                 case Pics_added:
                 default:
-                    updatePictures();
+                    updatePictures(reason.Picture);
                     break;
             }
         }
@@ -148,9 +180,9 @@ public class FrmViewer extends javax.swing.JFrame
     }
     public void registerToObserver(SrvPicManager obs) {
        obs.addObserver(this);
-       updatePictures();
+       updatePictures(null);
     }
-    private void updatePictures() {
+    private void updatePictures(DatPicture Pic) {
         //Todo  instead clearing entire list, delete/add different elements
         MyList.clear();
         ArrayList<DatPicture> paths1 = ModelPictures.getInstance().getNewPictures();
@@ -163,7 +195,7 @@ public class FrmViewer extends javax.swing.JFrame
             MyList.addElement(paths2.get(i));
 
         }
-
+        if (Pic !=null) jList1.setSelectedValue(Pic, true);
     }
     DefaultListModel<DatPicture> MyList = new DefaultListModel<>();
     

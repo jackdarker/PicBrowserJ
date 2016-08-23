@@ -17,14 +17,18 @@
  */
 package picbrowserj;
 
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.TransferHandler;
 
@@ -39,13 +43,30 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
      */
     public FrmPictureInfo() {
         initComponents();
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            saveLayout();
+        }
+        });
         jList1.setModel(new DefaultListModel<String>());
         jList2.setModel(new DefaultListModel<String>());
         update();
         jList1.setTransferHandler(new ListTransferHandler());
         jList2.setTransferHandler(new ListTransferHandler());
     }
-
+    private void saveLayout() {
+        SaveLoadSettings.getInstance().SetRect(
+                this.getClass().getName(), getBounds());
+    }
+    private void restoreLayout() {
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(
+                this.getClass().getName());
+        if(Rect!=null) {
+            this.setBounds(Rect);
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

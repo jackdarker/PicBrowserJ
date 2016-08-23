@@ -5,6 +5,11 @@
  */
 package picbrowserj;
 
+import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.JFrame;
+
 /**
  *
  * @author homeadmin
@@ -16,7 +21,24 @@ public class MDIApplication extends javax.swing.JFrame {
      */
     public MDIApplication() {
         initComponents();
+        SaveLoadSettings.init();
         SrvPicManager.init();
+        /* doesnt work if separat wind closed
+        addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            SaveLoadSettings.getInstance().Save();
+        }
+        });*/
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        public void run() {
+            // Do what you want when the application is stopping
+            saveLayout();
+            SaveLoadSettings.getInstance().Save();
+        }
+        }));
+
         restoreLayout();
     }
 
@@ -148,13 +170,21 @@ public class MDIApplication extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
+        //Todo trigger controlled shutdown of other windows
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
     private void viewMenuNewBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewMenuNewBrowserActionPerformed
         newBrowser();
     }//GEN-LAST:event_viewMenuNewBrowserActionPerformed
+    private void saveLayout() {
+        SaveLoadSettings.getInstance().SetRect(this.getClass().getName(), getBounds());
+    }
     private void restoreLayout() {
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(this.getClass().getName());
+        if(Rect!=null) {
+            this.setBounds(Rect);
+        }
         newBrowser();
         restoreViewer();
     }

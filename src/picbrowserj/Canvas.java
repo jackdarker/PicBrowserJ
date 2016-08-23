@@ -24,8 +24,13 @@ public class Canvas extends JPanel {
         super();
         image = new ImageIcon("resources/None.png").getImage();
     }
+    Image image1;
     public void showImage(String Path) {
-        Image image1 = new ImageIcon(Path).getImage();
+        image1 = new ImageIcon(Path).getImage();
+        rescaleImage();
+    }
+    public void rescaleImage() {
+        if (image1==null) return;
         //scale image but maintain ratio
         float height1=image1.getHeight(null);
         float height2 =getHeight();
@@ -39,7 +44,7 @@ public class Canvas extends JPanel {
         
         //AffineTransform affineTransform = AffineTransform.getScaleInstance(0.5, 0.5);
         //affineTransform.filter(image1,image2);
-        this.repaint();
+        this.repaint(); 
     }
     protected void paintComponent(Graphics graphics) {
         Graphics g = graphics.create();
