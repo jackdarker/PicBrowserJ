@@ -16,16 +16,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package picbrowserj;
-
+import java.util.HashSet;
 /**
  *This represents a tag/label
  * f.e. Tag "Deer" from TagGroup "Animal"
  * @author jkhome
  */
-public class DatTag {
+public class DatTag  {
     public DatTag(){
         IDListTags=-1;
         IDTags=-1;
+        Text="new Tag";
     }
     public DatTag(String Tag,String Group){
         IDListTags=-1;
@@ -39,4 +40,5 @@ public class DatTag {
     public int IDListTags;
     public int IDTags;
     
+
 }

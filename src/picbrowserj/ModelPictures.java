@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package picbrowserj;
-
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.sql.*;
+import java.util.Iterator;
 /**
  *
  * @author jkhome
@@ -27,11 +28,13 @@ public class ModelPictures {
     private static ModelPictures s_Instance;
     private static Connection s_DBConn;
     private static ArrayList<DatTag> s_Tags;
+    private static DatTagRel s_TagsRelation;
     private static ArrayList<DatPicture> s_Pictures;
     private static ArrayList<DatPicture> s_PicturesNew;
     
     private ModelPictures() {
         s_Tags = new ArrayList<DatTag>();
+        s_TagsRelation = new DatTagRel();
         s_Pictures = new ArrayList<DatPicture>();      
         s_PicturesNew = new ArrayList<DatPicture>();    
         InitDB();
@@ -88,10 +91,16 @@ public class ModelPictures {
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
-          sql = "CREATE TABLE ListTags " +
+          sql = "CREATE TABLE TagDef " +
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
-                       " Tag        CHAR(50), " + 
-                       " GroupX        CHAR(50) ) " ; 
+                       " Tag        CHAR(50)) " ; 
+          stmt.executeUpdate(sql);
+          stmt.close();
+          stmt = s_DBConn.createStatement();
+          sql = "CREATE TABLE TagRel " +
+                       "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
+                       " ParentID        INT, " + 
+                       " SubID        INT ) "  ; 
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
@@ -224,7 +233,7 @@ public class ModelPictures {
         ResultSet rs;
         try {
             stmt = s_DBConn.createStatement();
-            rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags where Tag='"+Tag.Text+"';" );
+            rs = stmt.executeQuery( "SELECT ID,Tag FROM TagDef where Tag='"+Tag.Text+"';" );
             while ( rs.next() ) {
                Update=true;
                Tag.IDListTags = rs.getInt("ID");
@@ -243,25 +252,16 @@ public class ModelPictures {
         Boolean Update=false;
         int id = -1;
         try {
-          /*  stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags where Tag='"+Tag.Text+"';" );
-            while ( rs.next() ) {
-               Update=true;
-               id = rs.getInt("ID");
-            }
-            rs.close();
-            stmt.close();*/
           Update = RefreshTagListID(Tag);
             
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
         if(Update) {
-            sql = "Update ListTags Set Tag='"+Tag.Text+
-                    "',GroupX='"+Tag.TagGroup+
-                    "' where ID="+String.format("%d",Tag.IDListTags)+";";
+            sql = "Update TagDef Set Tag='"+Tag.Text+"'"+
+                    " where ID="+String.format("%d",Tag.IDListTags)+";";
         } else {
-            sql = "INSERT INTO ListTags (Tag,GroupX) " +
-                     "VALUES ( '"+Tag.Text+"','"+Tag.TagGroup +"');"; 
+            sql = "INSERT INTO TagDef (Tag) " +
+                     "VALUES ( '"+Tag.Text+"');"; 
         }
         stmt.executeUpdate(sql);
         stmt.close();
@@ -448,16 +448,14 @@ public class ModelPictures {
             rs.close();
             //loading tags for pictures
             for(int i=0; i< s_Pictures.size();i++) {
-                rs = stmt.executeQuery( "SELECT Tags.ID,Tags.IDListTags,Tag,GroupX "+
-                        "From Tags inner join ListTags on Tags.IDListTags=ListTags.ID where Tags.IDPicture="+
+                rs = stmt.executeQuery( "SELECT Tags.ID,Tags.IDListTags,Tag "+
+                        "From Tags inner join TagDef on Tags.IDListTags=TagDef.ID where Tags.IDPicture="+
                         s_Pictures.get(i).ID +";" );
                 while ( rs.next() ) {
                     Tag = new DatTag();
                     Tag.IDListTags = rs.getInt("IDListTags");
                     Tag.IDTags = rs.getInt("ID");
                     Tag.Text = rs.getString("Tag");
-                    Tag.TagGroup = rs.getString("GroupX");
-                    Tag.IsGroup = (Tag.Text==Tag.TagGroup);
                     s_Pictures.get(i).Tags.add(Tag);
                 }
                 rs.close();
@@ -487,26 +485,48 @@ public class ModelPictures {
     }
     private void LoadTags() {
         s_Tags = new ArrayList<DatTag>();
+        HashMap<Integer,DatTag> IDList = new HashMap<Integer,DatTag>();
+        s_TagsRelation = new DatTagRel();
         Statement stmt = null;
         String sql="";
         DatTag Tag;
+        DatTag Tag2;
         try {
             stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID,Tag,GroupX FROM ListTags;" );
+            ResultSet rs = stmt.executeQuery( "SELECT ID,Tag FROM TagDef;" );
             while ( rs.next() ) {
                 Tag= new DatTag();
                 Tag.IDListTags= rs.getInt("ID");
                 Tag.Text =rs.getString("Tag");
-                Tag.TagGroup=rs.getString("GroupX");
-                Tag.IsGroup= (Tag.Text==Tag.TagGroup);
                 s_Tags.add(Tag);
+                IDList.put(Tag.IDListTags, Tag);
             }
             rs.close();
             stmt.close();
-        
+            stmt = s_DBConn.createStatement();
+            rs = stmt.executeQuery( "SELECT ID,ParentID,SubID FROM TagRel;" );
+            while ( rs.next() ) {
+                int ParentID = rs.getInt("ParentID");
+                int SubID =rs.getInt("SubID");
+                Tag = getTagByID(ParentID);
+                Tag2 = getTagByID(SubID);
+                s_TagsRelation.addRelation(Tag, Tag2);
+            }
+            rs.close();
+            stmt.close();
        } catch ( Exception e ) {
           HandleDBError( e);
        }
+    }
+    public DatTag getTagByID(int ID) {
+        DatTag x;
+        Iterator<DatTag> it= s_Tags.iterator();
+        while (it.hasNext()) {
+            x=it.next();
+            if (x.IDListTags==ID)
+                return x;
+        }
+        return null;
     }
     public ArrayList<DatTag> getAllTags() {
         return  s_Tags;
