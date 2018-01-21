@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package picbrowserj;
+import java.awt.Color;
 import java.util.HashSet;
 /**
  *This represents a tag/label
@@ -27,18 +28,19 @@ public class DatTag  {
         IDListTags=-1;
         IDTags=-1;
         Text="new Tag";
+        BGColor= java.awt.Color.RED;
     }
-    public DatTag(String Tag,String Group){
+    public DatTag(String Tag,Color color){
         IDListTags=-1;
         IDTags=-1;
         Text = Tag;
-        TagGroup=Group;
+        BGColor= color;
     }
     public String Text;
-    public String TagGroup;
+    public Color BGColor;
     public Boolean IsGroup;
-    public int IDListTags;
-    public int IDTags;
+    public int IDListTags;  //primarykey of the tag-definition
+    public int IDTags;  //primarykey of the tag-picture relation
     
 
 }

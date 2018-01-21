@@ -16,9 +16,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 package picbrowserj;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.sql.*;
+import java.util.HashSet;
 import java.util.Iterator;
 /**
  *
@@ -83,7 +85,7 @@ public class ModelPictures {
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
-          sql = "CREATE TABLE Pictures " +
+          sql = "CREATE TABLE Pictures " +      //definition of all pictures
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                        " Path           TEXT    NOT NULL, " + 
                        " Name        CHAR(50), " + 
@@ -91,20 +93,21 @@ public class ModelPictures {
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
-          sql = "CREATE TABLE TagDef " +
-                       "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
-                       " Tag        CHAR(50)) " ; 
+          sql = "CREATE TABLE TagDef " +        //definition of a Tag
+                  "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
+                  " Color        INT, " + 
+                  " Tag        CHAR(50)) " ; 
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
-          sql = "CREATE TABLE TagRel " +
+          sql = "CREATE TABLE TagRel " +        //definition how one Tag relates to another
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                        " ParentID        INT, " + 
                        " SubID        INT ) "  ; 
           stmt.executeUpdate(sql);
           stmt.close();
           stmt = s_DBConn.createStatement();
-          sql = "CREATE TABLE Tags " +
+          sql = "CREATE TABLE Tags " +          //definition what tags a picture has
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                        " IDListTags            INT     NOT NULL, " + 
                        "IDPicture            INT     NOT NULL )" ; 
@@ -127,62 +130,28 @@ public class ModelPictures {
         DatTag Tag;
         Tag= new DatTag();
         Tag.Text ="Animal";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=true;
+        Tag.BGColor=Color.cyan;
         UpdateTags(Tag);
         Tag= new DatTag();
         Tag.Text ="Deer";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=false;
+        Tag.BGColor=Color.LIGHT_GRAY;
         UpdateTags(Tag);
         Tag= new DatTag();
         Tag.Text ="Fox";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=false;
+        Tag.BGColor=Color.LIGHT_GRAY;
         UpdateTags(Tag);
         DatPicture pic= new DatPicture();
         pic.Name ="20150628_115213.jpg";
         pic.Path="D:/temp/artists/artists3/20150628_115213.jpg";
-        pic.addTag(new DatTag("Deer","Animal"));
+        pic.addTag(new DatTag("Deer",Color.GREEN));
         UpdatePictures(pic);
         pic = new DatPicture();
         pic.Name ="TPhoto_00001.jpg";
         pic.Path="D:/temp/artists/artists3/TPhoto_00001.jpg";
-        pic.addTag(new DatTag("Fox","Animal"));
+        pic.addTag(new DatTag("Fox",Color.GREEN));
         UpdatePictures(pic);
     }
-    private void createTestData1(){
-        // Todo set on FirstRun
-        UpdateConfig("Store","C:/temp/Pics",0);
-        int v= GetConfigInt("Version");
-        //Todo DB init goes here  //////////////////////////////////////
-        DatTag Tag;
-        Tag= new DatTag();
-        Tag.Text ="Animal";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=true;
-        UpdateTags(Tag);
-        Tag= new DatTag();
-        Tag.Text ="Deer";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=false;
-        UpdateTags(Tag);
-        Tag= new DatTag();
-        Tag.Text ="Fox";
-        Tag.TagGroup="Animal";
-        Tag.IsGroup=false;
-        UpdateTags(Tag);
-        DatPicture pic= new DatPicture();
-        pic.Name ="90025-414.JPG";
-        pic.Path="C:/Projects/Porsche_KBE/E1030342_20160713_PC_Porsche KBE 9X1 EOL/PROGRAM/OBJ_DATA/90025-414.JPG";
-        pic.addTag(new DatTag("Deer","Animal"));
-        UpdatePictures(pic);
-        pic = new DatPicture();
-        pic.Name ="90025-417.JPG";
-        pic.Path="C:/Projects/Porsche_KBE/E1030342_20160713_PC_Porsche KBE 9X1 EOL/PROGRAM/OBJ_DATA/90025-417.JPG";
-        pic.addTag(new DatTag("Fox","Animal"));
-        UpdatePictures(pic);
-    }
+    
     private void HandleDBError( Exception e) {
         System.err.println( e.getClass().getName() + ": " + e.getMessage() );
         System.exit(0);
@@ -233,10 +202,11 @@ public class ModelPictures {
         ResultSet rs;
         try {
             stmt = s_DBConn.createStatement();
-            rs = stmt.executeQuery( "SELECT ID,Tag FROM TagDef where Tag='"+Tag.Text+"';" );
+            rs = stmt.executeQuery( "SELECT ID,Color,Tag FROM TagDef where Tag='"+Tag.Text+"';" );
             while ( rs.next() ) {
                Update=true;
                Tag.IDListTags = rs.getInt("ID");
+               Tag.BGColor= new Color(rs.getInt("Color"));
             }
             rs.close();
             stmt.close();
@@ -257,11 +227,12 @@ public class ModelPictures {
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
         if(Update) {
-            sql = "Update TagDef Set Tag='"+Tag.Text+"'"+
+            sql = "Update TagDef Set Tag='"+Tag.Text+"',Color="+ 
+                    String.format("%d",Tag.BGColor.getRGB()) +
                     " where ID="+String.format("%d",Tag.IDListTags)+";";
         } else {
-            sql = "INSERT INTO TagDef (Tag) " +
-                     "VALUES ( '"+Tag.Text+"');"; 
+            sql = "INSERT INTO TagDef (Tag,Color) " +
+                     "VALUES ( '"+Tag.Text+"',"+String.format("%d",Tag.BGColor.getRGB())+");"; 
         }
         stmt.executeUpdate(sql);
         stmt.close();
@@ -290,7 +261,53 @@ public class ModelPictures {
         }    
         return Update;
     }
-    //updates/creates Picture-Entry
+    //updates/creates entry in Tag-Dictionary
+    private void UpdateTagRelation(DatTagRel TagRel ) {
+        Statement stmt = null;
+        String sql="";
+        Boolean Update=false;
+        int id = -1;
+        try {
+          Update = RefreshTagRelID(TagRel);
+            
+        s_DBConn.setAutoCommit(false);
+        stmt = s_DBConn.createStatement();
+        if(Update) {
+            sql = "Update TagRel Set Tag='"+Tag.Text+"',Color="+ 
+                    String.format("%d",Tag.BGColor.getRGB()) +
+                    " where ID="+String.format("%d",Tag.IDListTags)+";";
+        } else {
+            sql = "INSERT INTO TagDef (Tag,Color) " +
+                     "VALUES ( '"+Tag.Text+"',"+String.format("%d",Tag.BGColor.getRGB())+");"; 
+        }
+        stmt.executeUpdate(sql);
+        stmt.close();
+        s_DBConn.commit();
+
+       } catch ( Exception e ) {
+          HandleDBError( e);
+       }
+        Update = RefreshTagListID(Tag);
+    }
+    private Boolean RefreshPictureID(DatPicture Pic ) {
+        Statement stmt = null;
+        Boolean Update=false;
+        ResultSet rs;
+        try {
+            stmt = s_DBConn.createStatement();
+            rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
+            while ( rs.next() ) {
+               Update=true;
+               Pic.ID = rs.getInt("ID");
+            }
+            rs.close();
+            stmt.close();
+        } catch ( Exception e ) {
+          HandleDBError( e);
+        }    
+        return Update;
+    }
+//updates/creates Picture-Entry
     private void UpdatePictures(DatPicture Pic) {
         Statement stmt = null;
         String sql="";
@@ -493,10 +510,11 @@ public class ModelPictures {
         DatTag Tag2;
         try {
             stmt = s_DBConn.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT ID,Tag FROM TagDef;" );
+            ResultSet rs = stmt.executeQuery( "SELECT ID,Tag,Color FROM TagDef;" );
             while ( rs.next() ) {
                 Tag= new DatTag();
                 Tag.IDListTags= rs.getInt("ID");
+                Tag.BGColor= new Color(rs.getInt("Color"));
                 Tag.Text =rs.getString("Tag");
                 s_Tags.add(Tag);
                 IDList.put(Tag.IDListTags, Tag);
@@ -518,6 +536,16 @@ public class ModelPictures {
           HandleDBError( e);
        }
     }
+    public DatTag getTagByText(String Text) {
+        DatTag x;
+        Iterator<DatTag> it= s_Tags.iterator();
+        while (it.hasNext()) {
+            x=it.next();
+            if (x.Text.compareTo(Text)==0)
+                return x;
+        }
+        return null;
+    }
     public DatTag getTagByID(int ID) {
         DatTag x;
         Iterator<DatTag> it= s_Tags.iterator();
@@ -527,6 +555,26 @@ public class ModelPictures {
                 return x;
         }
         return null;
+    }
+    public ArrayList<DatTag> getParentTags(DatTag Me) {
+        ArrayList<DatTag> x= new ArrayList<>(0); 
+        HashSet<DatTag> rel=s_TagsRelation.get(Me,false);
+        if (rel==null) return x;
+        Iterator<DatTag> it=rel.iterator();
+        while (it.hasNext()) {
+            x.add(it.next());
+        }
+        return x;
+    }
+    public ArrayList<DatTag> getSubTags(DatTag Me) {
+        ArrayList<DatTag> x= new ArrayList<>(0); 
+        HashSet<DatTag> rel=s_TagsRelation.get(Me,true);
+        if (rel==null) return x;
+        Iterator<DatTag> it=rel.iterator();
+        while (it.hasNext()) {
+            x.add(it.next());
+        }
+        return x;
     }
     public ArrayList<DatTag> getAllTags() {
         return  s_Tags;

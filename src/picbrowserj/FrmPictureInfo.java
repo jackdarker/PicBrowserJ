@@ -17,27 +17,43 @@
  */
 package picbrowserj;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import javax.swing.TransferHandler;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
  * @author jkhome
  */
-public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
+public class FrmPictureInfo extends javax.swing.JFrame implements Observer, DocumentListener {
+
+    private DatTag TagToEdit;
+    final static String CANCEL_ACTION = "cancel-search";
 
     /**
      * Creates new form FrmPictureInfo
@@ -46,29 +62,87 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
         initComponents();
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent e) {
-            saveLayout();
-        }
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveLayout();
+            }
         });
-        jList1.setModel(new DefaultListModel<String>());
-        jList2.setModel(new DefaultListModel<String>());
-        update();
+        jList1.setModel(new DefaultListModel<DatTag>());
+        jList2.setModel(new DefaultListModel<DatTag>());
+        //Todo make jList Subclass for DatTag
         jList1.setTransferHandler(new ListTransferHandler());
         jList2.setTransferHandler(new ListTransferHandler());
         jTextField3.setTransferHandler(new ListTransferHandler());
+        jList1.setCellRenderer(new DatTagCellRenderer());
+        jList2.setCellRenderer(new DatTagCellRenderer());
+        jListAllTags.setModel(new DefaultListModel<DatTag>());
+        jListAllTags.setCellRenderer(new DatTagCellRenderer());
+        jListAllTags.setTransferHandler(new ListTransferHandler());
+        jListParentTags.setTransferHandler(new ListTransferHandler());
+        jListParentTags.setModel(new DefaultListModel<DatTag>());
+        jListParentTags.setCellRenderer(new DatTagCellRenderer());
+        jListSubTags.setModel(new DefaultListModel<DatTag>());
+        jListSubTags.setTransferHandler(new ListTransferHandler());
+        jListSubTags.setCellRenderer(new DatTagCellRenderer());
+        jTextField3.getDocument().addDocumentListener(this);
+
+        InputMap im = jTextField3.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = jTextField3.getActionMap();
+        im.put(KeyStroke.getKeyStroke("ESCAPE"), CANCEL_ACTION);
+        am.put(CANCEL_ACTION, new CancelAction());
+        update();
     }
+
+    // DocumentListener methods
+    public void insertUpdate(DocumentEvent ev) {
+        //search();
+    }
+
+    public void removeUpdate(DocumentEvent ev) {
+        //search();
+    }
+
+    public void changedUpdate(DocumentEvent ev) {//unused
+    }
+
+    class CancelAction extends AbstractAction {
+
+        public void actionPerformed(ActionEvent ev) {
+
+        }
+    }
+
+    // search the tag, create new if not exist
+    private void search() {
+        DatTag x = ModelPictures.getInstance().getTagByText(jTextField3.getText());
+        if (x == null) {
+            x = new DatTag(jTextField3.getText(), Color.CYAN);
+        }
+        ((DefaultListModel<DatTag>) jListParentTags.getModel()).clear();
+        ((DefaultListModel<DatTag>) jListSubTags.getModel()).clear();
+        ArrayList<DatTag> list = ModelPictures.getInstance().getSubTags(x);
+        for (int i = 0; i < list.size(); i++) {
+            ((DefaultListModel<DatTag>) jListSubTags.getModel()).add(i, list.get(i));
+        }
+        list = ModelPictures.getInstance().getParentTags(x);
+        for (int i = 0; i < list.size(); i++) {
+            ((DefaultListModel<DatTag>) jListParentTags.getModel()).add(i, list.get(i));
+        }
+    }
+
     private void saveLayout() {
         SaveLoadSettings.getInstance().SetRect(
                 this.getClass().getName(), getBounds());
     }
+
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(
+        Rectangle Rect = SaveLoadSettings.getInstance().GetRect(
                 this.getClass().getName());
-        if(Rect!=null) {
+        if (Rect != null) {
             this.setBounds(Rect);
         }
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -92,19 +166,20 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
         jTextField3 = new javax.swing.JTextField();
         jSplitPane2 = new javax.swing.JSplitPane();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jList3 = new javax.swing.JList<>();
+        jListAllTags = new javax.swing.JList<>();
         jSplitPane3 = new javax.swing.JSplitPane();
         jPanel4 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
-        jList6 = new javax.swing.JList<>();
+        jListSubTags = new javax.swing.JList<>();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane5 = new javax.swing.JScrollPane();
-        jList5 = new javax.swing.JList<>();
+        jListParentTags = new javax.swing.JList<>();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
 
         jButton1.setText("jButton1");
 
@@ -122,11 +197,6 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
 
         jSplitPane1.setDividerLocation(150);
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jList1.setDragEnabled(true);
         jList1.setDropMode(javax.swing.DropMode.INSERT);
         jScrollPane1.setViewportView(jList1);
@@ -160,39 +230,36 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
 
         jTextField3.setToolTipText("");
         jTextField3.setDropMode(javax.swing.DropMode.INSERT);
+        jTextField3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField3ActionPerformed(evt);
+            }
+        });
 
         jSplitPane2.setDividerLocation(150);
 
-        jList3.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jList3.setDragEnabled(true);
-        jList3.setDropMode(javax.swing.DropMode.INSERT);
-        jScrollPane3.setViewportView(jList3);
+        jListAllTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jListAllTags.setDragEnabled(true);
+        jListAllTags.setDropMode(javax.swing.DropMode.INSERT);
+        jScrollPane3.setViewportView(jListAllTags);
 
         jSplitPane2.setLeftComponent(jScrollPane3);
 
         jSplitPane3.setDividerLocation(150);
         jSplitPane3.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
-        jLabel2.setText("jLabel1");
+        jLabel2.setText("Parent Tags");
 
-        jList6.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jList6.setDragEnabled(true);
-        jList6.setDropMode(javax.swing.DropMode.INSERT);
-        jScrollPane6.setViewportView(jList6);
+        jListSubTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jListSubTags.setDragEnabled(true);
+        jListSubTags.setDropMode(javax.swing.DropMode.INSERT);
+        jScrollPane6.setViewportView(jListSubTags);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE)
+            .addComponent(jScrollPane6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 602, Short.MAX_VALUE)
             .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
@@ -208,20 +275,16 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
 
         jLabel1.setText("jLabel1");
 
-        jList5.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jList5.setDragEnabled(true);
-        jList5.setDropMode(javax.swing.DropMode.INSERT);
-        jScrollPane5.setViewportView(jList5);
+        jListParentTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jListParentTags.setDragEnabled(true);
+        jListParentTags.setDropMode(javax.swing.DropMode.INSERT);
+        jScrollPane5.setViewportView(jListParentTags);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE)
+            .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 602, Short.MAX_VALUE)
             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
@@ -242,15 +305,24 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
 
         jButton4.setText("Undo");
 
+        jButton5.setText("jButton5");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane2)
+            .addComponent(jSplitPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 634, Short.MAX_VALUE)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(42, 42, 42)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton5)
+                .addGap(24, 24, 24)
                 .addComponent(jButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton3)
@@ -266,7 +338,8 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
                     .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton2)
                     .addComponent(jButton3)
-                    .addComponent(jButton4))
+                    .addComponent(jButton4)
+                    .addComponent(jButton5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSplitPane2))
         );
@@ -281,15 +354,21 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        // TODO add your handling code here:
-        String y=evt.toString();
+
     }//GEN-LAST:event_jTabbedPane1StateChanged
-@Override
-    public void update(Observable obs, Object obj)
-    {
-        if(obs==SrvPicManager.getInstance()) {
-            MyObservable.UpdateReason reason= (MyObservable.UpdateReason)obj;
-            switch(reason.Reason){
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        Color x = JColorChooser.showDialog(this, "Choose Color", Color.yellow);
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
+        search();
+    }//GEN-LAST:event_jTextField3ActionPerformed
+    @Override
+    public void update(Observable obs, Object obj) {
+        if (obs == SrvPicManager.getInstance()) {
+            MyObservable.UpdateReason reason = (MyObservable.UpdateReason) obj;
+            switch (reason.Reason) {
                 case Pics_added:
                 default:
                     update();
@@ -299,7 +378,7 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
         try {
             //MyObservable obs2 = MyObservable.class.cast(obs);
             MyObservable.UpdateReason reason = MyObservable.UpdateReason.class.cast(obj);
-            switch(reason.Reason){
+            switch (reason.Reason) {
                 case Pics_viewed:
                     updatePicture(reason.Picture);
                     break;
@@ -310,30 +389,34 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
         } catch (ClassCastException e) {
         }
 
-        
     }
+
     public void registerToObserver(SrvPicManager obs) {
-       obs.addObserver(this);
-       update();
+        obs.addObserver(this);
+        update();
     }
+
     public void updatePicture(DatPicture Pic) {
         update();
-        ((DefaultListModel<String>) jList2.getModel()).clear();
-        for (int i = 0; i < Pic.Tags.size(); i++) {       
-            ((DefaultListModel<String>) jList2.getModel()).add(i, Pic.Tags.get(i).Text);
-            ((DefaultListModel<String>) jList1.getModel()).removeElement(Pic.Tags.get(i).Text);
+        ((DefaultListModel<DatTag>) jList2.getModel()).clear();
+        for (int i = 0; i < Pic.Tags.size(); i++) {
+            ((DefaultListModel<DatTag>) jList2.getModel()).add(i, Pic.Tags.get(i));
+            ((DefaultListModel<DatTag>) jList1.getModel()).removeElement(Pic.Tags.get(i));
         }
-        
-        
-    }
-    public void update() {
-        ArrayList<DatTag> list = ModelPictures.getInstance().getAllTags();
-        ((DefaultListModel<String>) jList1.getModel()).clear();
-        for (int i = 0; i < list.size(); i++) {       
-            ((DefaultListModel<String>) jList1.getModel()).add(i, list.get(i).Text);
-        }        
 
     }
+
+    public void update() {
+        ArrayList<DatTag> list = ModelPictures.getInstance().getAllTags();
+        ((DefaultListModel<DatTag>) jList1.getModel()).clear();
+        ((DefaultListModel<DatTag>) jListAllTags.getModel()).clear();
+        for (int i = 0; i < list.size(); i++) {
+            ((DefaultListModel<DatTag>) jList1.getModel()).add(i, list.get(i));
+            ((DefaultListModel<DatTag>) jListAllTags.getModel()).add(i, list.get(i));
+        }
+
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -369,71 +452,106 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
             }
         });
     }
-    class ListTransferHandler extends TransferHandler {
-  @Override
-  public int getSourceActions(JComponent c) {
-    return TransferHandler.COPY_OR_MOVE;
-  }
-  @Override
-  protected Transferable createTransferable(JComponent source) {
-    JList<String> sourceList = (JList<String>) source;
-    String data = sourceList.getSelectedValue();
-    Transferable t = new StringSelection(data);
-    return t;
-  }
 
-  @Override
-  protected void exportDone(JComponent source, Transferable data, int action) {
-    @SuppressWarnings("unchecked")
-    JList<String> sourceList = (JList<String>) source;
-    String movedItem = sourceList.getSelectedValue();
-    if (action == TransferHandler.MOVE) {
-      DefaultListModel<String> listModel = (DefaultListModel<String>) sourceList
-          .getModel();
-      listModel.removeElement(movedItem);
-    }
-  }
-  @Override
-  public boolean canImport(TransferHandler.TransferSupport support) {
-    if (!support.isDrop()) {
-      return false;
-    }
-    return support.isDataFlavorSupported(DataFlavor.stringFlavor);
-  }
-  @Override
-  public boolean importData(TransferHandler.TransferSupport support) {
-    if (!this.canImport(support)) {
-      return false;
-    }
-    Transferable t = support.getTransferable();
-    String data = null;
-    try {
-      data = (String) t.getTransferData(DataFlavor.stringFlavor);
-      if (data == null) {
-        return false;
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      return false;
-    }
-    if (support.getComponent() instanceof JList) {
-        JList.DropLocation dropLocation = (JList.DropLocation) support
-        .getDropLocation();
-        int dropIndex = dropLocation.getIndex();
-        JList<String> targetList = (JList<String>) support.getComponent();
-        DefaultListModel<String> listModel = (DefaultListModel<String>) targetList
-            .getModel();
-        if (dropLocation.isInsert()) {
-          listModel.add(dropIndex, data);
-        } else {
-          listModel.set(dropIndex, data);
+    class DatTagCellRenderer extends JLabel implements ListCellRenderer<DatTag> {
+
+        // This is the only method defined by ListCellRenderer.
+        // We just reconfigure the JLabel each time we're called.
+        @Override
+        public Component getListCellRendererComponent(
+                JList<? extends DatTag> list, // the list
+                DatTag value, // value to display
+                int index, // cell index
+                boolean isSelected, // is the cell selected
+                boolean cellHasFocus) // does the cell have focus
+        {
+
+            String s = value.Text;
+            setText(s);
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(value.BGColor);//(list.getBackground());
+                setForeground(list.getForeground());
+            }
+            setEnabled(list.isEnabled());
+            setFont(list.getFont());
+            setOpaque(true);
+            return this;
         }
-    } else if (support.getComponent() instanceof JTextField) {
-        JTextField targetList = (JTextField) support.getComponent();
-        targetList.setText(data);
     }
-    return true;
-  }
+
+    class ListTransferHandler extends TransferHandler {
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return TransferHandler.COPY_OR_MOVE;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent source) {
+            JList<DatTag> sourceList = (JList<DatTag>) source;
+            DatTag data = sourceList.getSelectedValue();
+            Transferable t = new StringSelection(data.Text);
+            return t;
+        }
+
+        @Override
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            @SuppressWarnings("unchecked")
+            JList<DatTag> sourceList = (JList<DatTag>) source;
+            DatTag movedItem = sourceList.getSelectedValue();
+            if (action == TransferHandler.MOVE) {
+                DefaultListModel<DatTag> listModel = (DefaultListModel<DatTag>) sourceList
+                        .getModel();
+                listModel.removeElement(movedItem);
+            }
+        }
+
+        @Override
+        public boolean canImport(TransferHandler.TransferSupport support) {
+            if (!support.isDrop()) {
+                return false;
+            }
+            return support.isDataFlavorSupported(DataFlavor.stringFlavor);
+        }
+
+        @Override
+        public boolean importData(TransferHandler.TransferSupport support) {
+            if (!this.canImport(support)) {
+                return false;
+            }
+            Transferable t = support.getTransferable();
+            String data = null;
+            try {
+                data = (String) t.getTransferData(DataFlavor.stringFlavor);
+                if (data == null) {
+                    return false;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+            if (support.getComponent() instanceof JList) {
+                JList.DropLocation dropLocation = (JList.DropLocation) support
+                        .getDropLocation();
+                int dropIndex = dropLocation.getIndex();
+                JList<DatTag> targetList = (JList<DatTag>) support.getComponent();
+                DefaultListModel<DatTag> listModel = (DefaultListModel<DatTag>) targetList
+                        .getModel();
+                if (dropLocation.isInsert()) {
+                    listModel.add(dropIndex, ModelPictures.getInstance().getTagByText(data));
+                } else {
+                    listModel.set(dropIndex, ModelPictures.getInstance().getTagByText(data));
+                }
+            } else if (support.getComponent() instanceof JTextField) {
+                JTextField targetList = (JTextField) support.getComponent();
+                targetList.setText(data);
+                search();
+            }
+            return true;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -441,13 +559,14 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JList<String> jList1;
-    private javax.swing.JList<String> jList2;
-    private javax.swing.JList<String> jList3;
-    private javax.swing.JList<String> jList5;
-    private javax.swing.JList<String> jList6;
+    private javax.swing.JList<DatTag> jList1;
+    private javax.swing.JList<DatTag> jList2;
+    private javax.swing.JList<DatTag> jListAllTags;
+    private javax.swing.JList<DatTag> jListParentTags;
+    private javax.swing.JList<DatTag> jListSubTags;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
