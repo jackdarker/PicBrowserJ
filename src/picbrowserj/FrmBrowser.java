@@ -40,8 +40,8 @@ import javax.swing.tree.TreeSelectionModel;
  *
  * @author homeadmin
  */
-public class FrmBrowser extends javax.swing.JInternalFrame 
-    implements Observer,TreeSelectionListener {
+public class FrmBrowser extends javax.swing.JInternalFrame  
+    implements SrvPicManagerListener,TreeSelectionListener {
 
 
     /**
@@ -316,12 +316,13 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             jTree1.setModel(treeModelDb);
         }
     }    
-    @Override
+   /* @Override
    public void update(Observable obs, Object obj)
    {
-   }
+   }*/
    public void registerToObserver(SrvPicManager obs) {
-       obs.addObserver(this);
+      // obs.addObserver(this);
+      SrvPicManager.getInstance().addListener(this);
    } 
    
 String m_Root;
@@ -394,6 +395,26 @@ void updateFileList(String Root, int Page) {
         new Thread(ci).start();
     }
     int m_PicsPerPage=40;
+
+    @Override
+    public void EventPics_added() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_moved() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_viewed() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_new() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     public class CreateIcons implements Runnable {
         public CreateIcons() { 
         }

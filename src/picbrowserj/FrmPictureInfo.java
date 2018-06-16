@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.AbstractAction;
@@ -45,12 +46,16 @@ import javax.swing.ListCellRenderer;
 import javax.swing.TransferHandler;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import picbrowserj.Cmds.*;
+import picbrowserj.Cmds.CmdCreateTag.CmdResultAdd;
+import picbrowserj.Interface.Callable;
+import picbrowserj.Interface.CmdInterface;
 
 /**
  *
  * @author jkhome
  */
-public class FrmPictureInfo extends javax.swing.JFrame implements Observer, DocumentListener {
+public class FrmPictureInfo extends javax.swing.JFrame implements SrvPicManagerListener, DocumentListener {
 
     private DatTag TagToEdit;
     final static String CANCEL_ACTION = "cancel-search";
@@ -78,12 +83,12 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
         jListAllTags.setModel(new DefaultListModel<DatTag>());
         jListAllTags.setCellRenderer(new DatTagCellRenderer());
         jListAllTags.setTransferHandler(new ListTransferHandler());
-        jListParentTags.setTransferHandler(new ListTransferHandler());
-        jListParentTags.setModel(new DefaultListModel<DatTag>());
-        jListParentTags.setCellRenderer(new DatTagCellRenderer());
-        jListSubTags.setModel(new DefaultListModel<DatTag>());
         jListSubTags.setTransferHandler(new ListTransferHandler());
+        jListSubTags.setModel(new DefaultListModel<DatTag>());
         jListSubTags.setCellRenderer(new DatTagCellRenderer());
+        jListParentTags.setModel(new DefaultListModel<DatTag>());
+        jListParentTags.setTransferHandler(new ListTransferHandler());
+        jListParentTags.setCellRenderer(new DatTagCellRenderer());
         jTextField3.getDocument().addDocumentListener(this);
 
         InputMap im = jTextField3.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -105,6 +110,26 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
     public void changedUpdate(DocumentEvent ev) {//unused
     }
 
+    @Override
+    public void EventPics_added() {
+        update();
+    }
+
+    @Override
+    public void EventPics_moved() {
+        update();
+    }
+
+    @Override
+    public void EventPics_viewed() {
+        //updatePicture(reason.Picture);
+    }
+
+    @Override
+    public void EventPics_new() {
+        update();
+    }
+
     class CancelAction extends AbstractAction {
 
         public void actionPerformed(ActionEvent ev) {
@@ -114,20 +139,32 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
 
     // search the tag, create new if not exist
     private void search() {
-        DatTag x = ModelPictures.getInstance().getTagByText(jTextField3.getText());
+        /*DatTag x = ModelPictures.getInstance().getTagByText(jTextField3.getText());
         if (x == null) {
             x = new DatTag(jTextField3.getText(), Color.CYAN);
-        }
-        ((DefaultListModel<DatTag>) jListParentTags.getModel()).clear();
-        ((DefaultListModel<DatTag>) jListSubTags.getModel()).clear();
-        ArrayList<DatTag> list = ModelPictures.getInstance().getSubTags(x);
-        for (int i = 0; i < list.size(); i++) {
-            ((DefaultListModel<DatTag>) jListSubTags.getModel()).add(i, list.get(i));
-        }
-        list = ModelPictures.getInstance().getParentTags(x);
-        for (int i = 0; i < list.size(); i++) {
-            ((DefaultListModel<DatTag>) jListParentTags.getModel()).add(i, list.get(i));
-        }
+            ModelPictures.getInstance().addTag(x);
+        }*/
+        if(jTextField3.getText().isEmpty()) return;
+        CmdInterface _Cmd = new CmdCreateTag(jTextField3.getText(), new Callable<CmdResultAdd>() {
+        @Override
+          public void call(CmdResultAdd Result) throws Exception {
+            if (Result.OK()) {
+                jTextField3.setText(Result.Result().Text);
+                update();
+                /*((DefaultListModel<DatTag>) jListSubTags.getModel()).clear();
+                ((DefaultListModel<DatTag>) jListParentTags.getModel()).clear();
+                List<DatTag> list = ModelPictures.getInstance().getSubTags(Result.Result());
+                for (int i = 0; i < list.size(); i++) {
+                    ((DefaultListModel<DatTag>) jListSubTags.getModel()).add(i, list.get(i));
+                }
+                list = ModelPictures.getInstance().getParentTags(Result.Result());
+                for (int i = 0; i < list.size(); i++) {
+                    ((DefaultListModel<DatTag>) jListParentTags.getModel()).add(i, list.get(i));
+                }*/
+            }
+          }
+        });
+        SrvPicManager.getInstance().DoCmd(_Cmd); 
     }
 
     private void saveLayout() {
@@ -171,12 +208,12 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
         jPanel4 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
-        jListSubTags = new javax.swing.JList<>();
+        jListParentTags = new javax.swing.JList<>();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane5 = new javax.swing.JScrollPane();
-        jListParentTags = new javax.swing.JList<>();
-        jButton2 = new javax.swing.JButton();
+        jListSubTags = new javax.swing.JList<>();
+        btSaveRel = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
@@ -250,10 +287,10 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
 
         jLabel2.setText("Parent Tags");
 
-        jListSubTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        jListSubTags.setDragEnabled(true);
-        jListSubTags.setDropMode(javax.swing.DropMode.INSERT);
-        jScrollPane6.setViewportView(jListSubTags);
+        jListParentTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jListParentTags.setDragEnabled(true);
+        jListParentTags.setDropMode(javax.swing.DropMode.INSERT);
+        jScrollPane6.setViewportView(jListParentTags);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -275,10 +312,10 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
 
         jLabel1.setText("jLabel1");
 
-        jListParentTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        jListParentTags.setDragEnabled(true);
-        jListParentTags.setDropMode(javax.swing.DropMode.INSERT);
-        jScrollPane5.setViewportView(jListParentTags);
+        jListSubTags.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jListSubTags.setDragEnabled(true);
+        jListSubTags.setDropMode(javax.swing.DropMode.INSERT);
+        jScrollPane5.setViewportView(jListSubTags);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -299,7 +336,12 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
 
         jSplitPane2.setRightComponent(jSplitPane3);
 
-        jButton2.setText("Save");
+        btSaveRel.setText("Save");
+        btSaveRel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btSaveRelActionPerformed(evt);
+            }
+        });
 
         jButton3.setText("Cancle");
 
@@ -323,7 +365,7 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton5)
                 .addGap(24, 24, 24)
-                .addComponent(jButton2)
+                .addComponent(btSaveRel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -336,7 +378,7 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
                 .addGap(6, 6, 6)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2)
+                    .addComponent(btSaveRel)
                     .addComponent(jButton3)
                     .addComponent(jButton4)
                     .addComponent(jButton5))
@@ -364,7 +406,19 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
     private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
         search();
     }//GEN-LAST:event_jTextField3ActionPerformed
-    @Override
+
+    private void btSaveRelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btSaveRelActionPerformed
+        if(this.jListParentTags.getModel().getSize()!=1)    return;
+        DatTag _parent=this.jListParentTags.getModel().getElementAt(0);
+        ModelPictures.getInstance().removeRelation(_parent);
+        int _NoSubs =this.jListSubTags.getModel().getSize();
+        for(int i=0;i<_NoSubs;i++) {
+            DatTag _sub=this.jListSubTags.getModel().getElementAt(i);
+            ModelPictures.getInstance().addRelation(_parent, _sub);
+        }
+            
+    }//GEN-LAST:event_btSaveRelActionPerformed
+   /* @Override
     public void update(Observable obs, Object obj) {
         if (obs == SrvPicManager.getInstance()) {
             MyObservable.UpdateReason reason = (MyObservable.UpdateReason) obj;
@@ -389,11 +443,12 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
         } catch (ClassCastException e) {
         }
 
-    }
+    }*/
 
     public void registerToObserver(SrvPicManager obs) {
-        obs.addObserver(this);
-        update();
+       // obs.addObserver(this);
+       SrvPicManager.getInstance().addListener(this);
+       update();
     }
 
     public void updatePicture(DatPicture Pic) {
@@ -407,13 +462,50 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
     }
 
     public void update() {
-        ArrayList<DatTag> list = ModelPictures.getInstance().getAllTags();
+        ((DefaultListModel<DatTag>) jListSubTags.getModel()).clear();
+        ((DefaultListModel<DatTag>) jListParentTags.getModel()).clear();
+        ((DefaultListModel<DatTag>) jList1.getModel()).clear();
+        ((DefaultListModel<DatTag>) jListAllTags.getModel()).clear();
+ 
+        CmdFindTag _Cmd= new CmdFindTag(jTextField3.getText(),
+            new Callable<CmdResultAdd>() {
+                @Override
+                public void call(CmdResultAdd Result) throws Exception {
+                    ArrayList<DatTag> list=null;
+                    List<DatTag> ListSubTags=null;
+                    List<DatTag> ListParentTags=null;
+                    list = ModelPictures.getInstance().getAllTags();
+                    if(Result.OK()) {
+                        ListSubTags =  ModelPictures.getInstance().getSubTags(Result.Result());
+                        ListParentTags = ModelPictures.getInstance().getParentTags(Result.Result());
+                        Result.Result();
+                    } else {
+                        
+                        ListSubTags = ListParentTags=  new ArrayList<>(0);
+                    }
+                    for (int i = 0; i < list.size(); i++) {
+                        ((DefaultListModel<DatTag>) jList1.getModel()).add(i, list.get(i));
+                    }
+                    for (int i = 0; i < ListSubTags.size(); i++) {
+                        ((DefaultListModel<DatTag>) jListSubTags.getModel()).add(i, ListSubTags.get(i));
+                    }
+                    for (int i = 0; i < ListParentTags.size(); i++) {
+                        ((DefaultListModel<DatTag>) jListParentTags.getModel()).add(i, ListParentTags.get(i));
+                    }
+                    list.remove(Result.Result());
+                    for (int i = 0; i < list.size(); i++) {
+                        ((DefaultListModel<DatTag>) jListAllTags.getModel()).add(i, list.get(i));
+                    }
+                }
+            });
+        _Cmd.Redo();
+        /*
         ((DefaultListModel<DatTag>) jList1.getModel()).clear();
         ((DefaultListModel<DatTag>) jListAllTags.getModel()).clear();
         for (int i = 0; i < list.size(); i++) {
             ((DefaultListModel<DatTag>) jList1.getModel()).add(i, list.get(i));
             ((DefaultListModel<DatTag>) jListAllTags.getModel()).add(i, list.get(i));
-        }
+        }*/
 
     }
 
@@ -555,8 +647,8 @@ public class FrmPictureInfo extends javax.swing.JFrame implements Observer, Docu
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btSaveRel;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;

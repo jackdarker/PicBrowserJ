@@ -20,7 +20,7 @@ import javax.swing.JFrame;
  * @author homeadmin
  */
 public class FrmViewer extends javax.swing.JFrame
-    implements Observer {
+    implements SrvPicManagerListener {
 
     /**
      * Creates new form FrmViewer
@@ -164,7 +164,7 @@ public class FrmViewer extends javax.swing.JFrame
        canvas1.rescaleImage();
     }//GEN-LAST:event_canvas1ComponentResized
     private boolean DeferResize=false;    
-    @Override
+    /*@Override
     public void update(Observable obs, Object obj)
     {
         if(obs==SrvPicManager.getInstance()) {
@@ -177,9 +177,10 @@ public class FrmViewer extends javax.swing.JFrame
             }
         }
         
-    }
+    }*/
     public void registerToObserver(SrvPicManager obs) {
-       obs.addObserver(this);
+       //obs.addObserver(this);
+       SrvPicManager.getInstance().addListener(this);
        updatePictures(null);
     }
     private void updatePictures(DatPicture Pic) {
@@ -257,4 +258,24 @@ public class FrmViewer extends javax.swing.JFrame
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void EventPics_added() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_moved() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_viewed() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void EventPics_new() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

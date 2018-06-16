@@ -18,6 +18,7 @@
 package picbrowserj;
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.Objects;
 /**
  *This represents a tag/label
  * f.e. Tag "Deer" from TagGroup "Animal"
@@ -35,6 +36,25 @@ public class DatTag  {
         IDTags=-1;
         Text = Tag;
         BGColor= color;
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) 
+            return true;
+        if (obj == null) 
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DatTag other = (DatTag) obj;
+        if (IDListTags == -1 || other.IDListTags==-1) {
+            return false;
+        } else if (IDListTags!=other.IDListTags)
+            return false;
+        return true;
+    }
+     @Override
+    public int hashCode() {
+        return Objects.hash(IDListTags, IDTags, Text,BGColor);
     }
     public String Text;
     public Color BGColor;

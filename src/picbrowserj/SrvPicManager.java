@@ -6,31 +6,45 @@
 package picbrowserj;
 
 import java.util.ArrayList;
-import java.util.Observable;
 import java.util.Observer;
+import java.util.Observable;
 
 /**
  *
  * @author jkhome
  */
-public class SrvPicManager extends Observable implements Observer{
-    private static ArrayList<InterfaceSrvObserver> s_Observers;
-    //private static ArrayList<String> s_Pictures;
+interface SrvPicManagerListener {
+    void EventPics_added(); //Picture loaded for browsing
+    void EventPics_moved(); 
+    void EventPics_viewed(); //Picture selected for viewing
+    void EventPics_new(); 
+}
+public class SrvPicManager 
+        extends picbrowserj.Observable<SrvPicManagerListener> 
+        implements ModelListener,java.util.Observer{
     
     private static SrvPicManager s_Instance;
     private SrvPicManager() {
-        s_Observers = new ArrayList<InterfaceSrvObserver>();
         ModelPictures.init();
     }
-    private void do_update () {
-        
-        notifyObservers();
-        /*for(int i=0; i< s_Observers.size();i++) {
-            InterfaceSrvObserver Obj = s_Observers.get(i);
-            Obj.update(reason);
-        }*/
-    }
-    
+
+    @Override
+   public void update(Observable obs, Object obj)
+   {
+       try {
+            MyObservable.UpdateReason reason = MyObservable.UpdateReason.class.cast(obj);
+            switch(reason.Reason){
+                case Pics_new:
+                   // updatePicture(reason.Picture);
+                    ModelPictures.getInstance().AddNewPicture(reason.Picture);
+                    onEventPics_added(); 
+                    break;
+                default:
+                    break;
+            }
+        } catch (ClassCastException e) {
+        }
+   }
     public static boolean init() {
         if (s_Instance==null) {
             s_Instance= new SrvPicManager();
@@ -52,45 +66,50 @@ public class SrvPicManager extends Observable implements Observer{
     public ArrayList<DatPicture> getPicturesToView() {
         return ModelPictures.getInstance().getAllPicture();
     }
-   @Override
-   public void update(Observable obs, Object obj)
-   {
-       try {
-            MyObservable.UpdateReason reason = MyObservable.UpdateReason.class.cast(obj);
-            switch(reason.Reason){
-                case Pics_new:
-                   // updatePicture(reason.Picture);
-                    ModelPictures.getInstance().AddNewPicture(reason.Picture);
-                    this.setChanged();
-                    this.notifyObservers(reason);
-                    break;
-                default:
-                    break;
-            }
-        } catch (ClassCastException e) {
-        }
-   }
-    public void registerObserver (InterfaceSrvObserver listener) {
-        if (listener==null) return;
-        if (s_Observers.contains(listener)) return;
-        s_Observers.add(listener);
-    }
-    public void unregisterObserver (InterfaceSrvObserver listener) {
-        if (s_Observers.contains(listener)) {
-            s_Observers.remove(listener);
-        }
-    }
-    MyObservable MyObs = new MyObservable();
+   
+
     private void loadData(){
-        
-        MyObservable.UpdateReason reason;
-        reason = MyObs.new UpdateReason(MyObservable.updateReasonEnum.Pics_added,"");
-        this.setChanged();
-        this.notifyObservers(reason);
+        onEventPics_added();
     }
     
     public void SavePicture(DatPicture Pic) {
         ModelPictures.getInstance().SavePicture(Pic);
     }
     
+    public void DoCmd(picbrowserj.Interface.CmdInterface Cmd) {
+        Cmd.Redo();
+    }
+    // Events raised by Service
+    void onEventPics_added() {
+        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    }
+    void onEventPics_moved(){
+        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    } 
+    void onEventPics_viewed(){
+        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    }
+    void onEventPics_new(){
+        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    }
+    // Events received from Model
+    @Override
+    public void EventPics_added() {
+        onEventPics_added();
+    }
+
+    @Override
+    public void EventPics_moved() {
+        onEventPics_moved();
+    }
+
+    @Override
+    public void EventPics_viewed() {
+        onEventPics_viewed();
+    }
+
+    @Override
+    public void EventPics_new() {
+        onEventPics_new();
+    }
 }

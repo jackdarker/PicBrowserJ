@@ -22,11 +22,18 @@ import java.util.ArrayList;
 import java.sql.*;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 /**
  *
  * @author jkhome
  */
-public class ModelPictures {
+interface ModelListener {
+    void EventPics_added(); //Picture loaded for browsing
+    void EventPics_moved(); 
+    void EventPics_viewed(); //Picture selected for viewing
+    void EventPics_new(); 
+}
+public class ModelPictures extends picbrowserj.Observable<ModelListener>{
     private static ModelPictures s_Instance;
     private static Connection s_DBConn;
     private static ArrayList<DatTag> s_Tags;
@@ -102,6 +109,7 @@ public class ModelPictures {
           stmt = s_DBConn.createStatement();
           sql = "CREATE TABLE TagRel " +        //definition how one Tag relates to another
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
+                       " Status        INT, " + 
                        " ParentID        INT, " + 
                        " SubID        INT ) "  ; 
           stmt.executeUpdate(sql);
@@ -262,24 +270,28 @@ public class ModelPictures {
         return Update;
     }
     //updates/creates entry in Tag-Dictionary
-    private void UpdateTagRelation(DatTagRel TagRel ) {
+    private void UpdateTagRelation( ) {
         Statement stmt = null;
         String sql="";
         Boolean Update=false;
         int id = -1;
         try {
-          Update = RefreshTagRelID(TagRel);
-            
         s_DBConn.setAutoCommit(false);
         stmt = s_DBConn.createStatement();
-        if(Update) {
-            sql = "Update TagRel Set Tag='"+Tag.Text+"',Color="+ 
-                    String.format("%d",Tag.BGColor.getRGB()) +
-                    " where ID="+String.format("%d",Tag.IDListTags)+";";
-        } else {
-            sql = "INSERT INTO TagDef (Tag,Color) " +
-                     "VALUES ( '"+Tag.Text+"',"+String.format("%d",Tag.BGColor.getRGB())+");"; 
+        for(DatTagRel.Value e:s_TagsRelation) {
+
+    /*UPDATE tableName SET VALUE='newValue'  WHERE COLUMN='identifier'
+    IF @@ROWCOUNT=0
+        INSERT INTO tableName VALUES (...)*/
+            sql = "INSERT OR REPLACE INTO TagRel (ParentID,SubID,Status) " +
+                     "VALUES ("+ String.format("%d",e.TagParent.IDListTags)+
+                ", "+String.format("%d",e.TagChild.IDListTags)+
+                ", "+String.format("%d",e.Status)+
+                ");"; 
+        
+        stmt.executeUpdate(sql);
         }
+        sql = "Delete from TagRel where Status=1;";
         stmt.executeUpdate(sql);
         stmt.close();
         s_DBConn.commit();
@@ -287,26 +299,8 @@ public class ModelPictures {
        } catch ( Exception e ) {
           HandleDBError( e);
        }
-        Update = RefreshTagListID(Tag);
     }
-    private Boolean RefreshPictureID(DatPicture Pic ) {
-        Statement stmt = null;
-        Boolean Update=false;
-        ResultSet rs;
-        try {
-            stmt = s_DBConn.createStatement();
-            rs = stmt.executeQuery( "SELECT ID FROM Pictures where Path='"+Pic.Path+"';" );
-            while ( rs.next() ) {
-               Update=true;
-               Pic.ID = rs.getInt("ID");
-            }
-            rs.close();
-            stmt.close();
-        } catch ( Exception e ) {
-          HandleDBError( e);
-        }    
-        return Update;
-    }
+    
 //updates/creates Picture-Entry
     private void UpdatePictures(DatPicture Pic) {
         Statement stmt = null;
@@ -501,9 +495,9 @@ public class ModelPictures {
         s_PicturesNew.add(Pic);
     }
     private void LoadTags() {
-        s_Tags = new ArrayList<DatTag>();
-        HashMap<Integer,DatTag> IDList = new HashMap<Integer,DatTag>();
-        s_TagsRelation = new DatTagRel();
+        s_Tags.clear();//s_Tags = new ArrayList<DatTag>();
+        //??HashMap<Integer,DatTag> IDList = new HashMap<Integer,DatTag>();
+        s_TagsRelation.clear(); // = new DatTagRel();
         Statement stmt = null;
         String sql="";
         DatTag Tag;
@@ -517,12 +511,12 @@ public class ModelPictures {
                 Tag.BGColor= new Color(rs.getInt("Color"));
                 Tag.Text =rs.getString("Tag");
                 s_Tags.add(Tag);
-                IDList.put(Tag.IDListTags, Tag);
+                //IDList.put(Tag.IDListTags, Tag);
             }
             rs.close();
             stmt.close();
             stmt = s_DBConn.createStatement();
-            rs = stmt.executeQuery( "SELECT ID,ParentID,SubID FROM TagRel;" );
+            rs = stmt.executeQuery( "SELECT ID,ParentID,SubID FROM TagRel where Status!=1;" );
             while ( rs.next() ) {
                 int ParentID = rs.getInt("ParentID");
                 int SubID =rs.getInt("SubID");
@@ -556,27 +550,46 @@ public class ModelPictures {
         }
         return null;
     }
-    public ArrayList<DatTag> getParentTags(DatTag Me) {
-        ArrayList<DatTag> x= new ArrayList<>(0); 
-        HashSet<DatTag> rel=s_TagsRelation.get(Me,false);
-        if (rel==null) return x;
-        Iterator<DatTag> it=rel.iterator();
-        while (it.hasNext()) {
-            x.add(it.next());
-        }
-        return x;
+    
+    public DatTag addTag(DatTag Tag) {
+        s_Tags.add(Tag);
+        UpdateTags(Tag);
+        return Tag;
     }
-    public ArrayList<DatTag> getSubTags(DatTag Me) {
-        ArrayList<DatTag> x= new ArrayList<>(0); 
-        HashSet<DatTag> rel=s_TagsRelation.get(Me,true);
-        if (rel==null) return x;
-        Iterator<DatTag> it=rel.iterator();
-        while (it.hasNext()) {
-            x.add(it.next());
-        }
-        return x;
+    
+    public void addRelation( DatTag parent,DatTag sub){
+        s_TagsRelation.addRelation(parent, sub);
+        UpdateTagRelation();
+    }
+    public void removeRelation( DatTag parent, DatTag sub){
+        s_TagsRelation.removeRelation(parent, sub);
+        UpdateTagRelation();
+    }
+    public void removeRelation( DatTag parent){
+        s_TagsRelation.removeRelation(parent);
+        UpdateTagRelation();
+    }
+    public List<DatTag> getParentTags(DatTag Me) {
+        List<DatTag> rel=s_TagsRelation.get(Me,true);
+        return rel;
+    }
+    public List<DatTag> getSubTags(DatTag Me) {
+        List<DatTag> rel=s_TagsRelation.get(Me,false);
+        return rel;
     }
     public ArrayList<DatTag> getAllTags() {
         return  s_Tags;
+    }
+    void onEventPics_added() {
+        for(ModelListener l: listeners) l.EventPics_added();
+    }
+    void onEventPics_moved(){
+        for(ModelListener l: listeners) l.EventPics_added();
+    } 
+    void onEventPics_viewed(){
+        for(ModelListener l: listeners) l.EventPics_added();
+    }
+    void onEventPics_new(){
+        for(ModelListener l: listeners) l.EventPics_added();
     }
 }
