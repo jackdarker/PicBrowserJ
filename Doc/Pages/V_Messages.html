@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Development Tools</title>
+    <link href="../js/DocStyle.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <h1>Message-Flow</h1>
+    <p>There can be :</p>
+    <ul>
+        <li>n Browser</li>
+        <li>only 1 Viewer</li>
+        <li>only 1 Tageditor </li>
+    </ul>
+    <hr />
+    <h2>Picture selected in Browser</h2>
+    <div class="mermaid">
+    sequenceDiagram
+        participant B as Browser 1
+        participant S as Service
+        participant V as Viewer
+        participant T as Tagger
+
+        Note right of B: clicked on picture
+        B->>+S: Picture Selected    
+        alt new picture
+           activate S
+           Note right of S: create new Picture
+            S->>V: Picture Selected
+            deactivate S
+            S->>T: Picture Selected
+            
+        else known picture
+            S->>V: Picture Selected
+            S->>T: Picture Selected
+        end
+        Note right of B: dropped picture
+        B->>S: moved picture
+        alt new picture
+           activate S
+           Note right of S: create new Picture
+            S->>V: Picture Selected
+            deactivate S
+            S->>T: Picture Selected
+            
+        else known picture
+            activate S
+            Note right of S: update Picture-Path
+            S->>V: Picture Selected
+            deactivate S
+            S->>T: Picture Selected
+        end
+
+    </div>
+    <hr />
+    <h2>Picture selected in Viewer</h2>
+    <div class="mermaid">
+    sequenceDiagram
+        participant V as Viewer
+        participant S as Service
+        participant B as Browser 1
+        participant T as Tagger
+
+        Note right of V: clicked on picture
+        V->>+S: Picture Selected
+        S->>+T: Picture Selected
+        opt Source Browser closed
+           activate S
+           Note right of S: open new Browser
+            
+            deactivate S
+        end
+        S->>+B: Picture Selected   
+    </div> 
+    <hr />
+    <h2>Picture deleted in Browser</h2>
+    <div class="mermaid">
+    sequenceDiagram
+        participant B as Browser 1
+        participant S as Service
+        participant V as Viewer
+        participant T as Tagger
+
+        Note right of B: delete picture
+        activate S
+        Note right of S: remove Picture
+        S->>V: delete Picture
+        deactivate S
+        S->>T: delete Picture 
+    </div> 
+    <script src="../js/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true });</script>
+</body>
+</html>

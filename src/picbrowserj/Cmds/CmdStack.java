@@ -38,14 +38,14 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
          for(CmdStackListener l: listeners) l.EventCanRedoChanged();
     }
     private void onEventCanUndoChanged() {
-         for(CmdStackListener l: listeners) l.EventCanRedoChanged();
+         for(CmdStackListener l: listeners) l.EventCanUndoChanged();
     }
     private void onEventUpdate() {
-         for(CmdStackListener l: listeners) l.EventCanRedoChanged();
+         for(CmdStackListener l: listeners) l.EventUpdate();
     }
     private int m_MaxUndo=10 ;
     private int m_CurrentCmd;
-    private Vector<picbrowserj.Interface.CmdInterface> m_CmdStack;
+    private final Vector<picbrowserj.Interface.CmdInterface> m_CmdStack;
     public CmdStack()
     {
         m_CmdStack = new Vector<picbrowserj.Interface.CmdInterface>();
@@ -81,13 +81,18 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
             m_CmdStack.removeAll(m_CmdStack.subList(
                     (m_CurrentCmd+1), (m_CmdStack.size() - m_CurrentCmd-1)));
         };
-        m_CmdStack.add(Command);
-        if (m_CmdStack.size() > m_MaxUndo)
-        {
-            m_CmdStack.retainAll(m_CmdStack.subList(0,m_CmdStack.size() - m_MaxUndo));
+        if (!Command.IgnoreAsUndoRedo()) {
+            m_CmdStack.add(Command);
+            if (m_CmdStack.size() > m_MaxUndo)
+            {
+                m_CmdStack.retainAll(m_CmdStack.subList(0,m_CmdStack.size() - m_MaxUndo));
+            }
+            m_CurrentCmd = Math.max(-1, m_CmdStack.size() - 2);
+            Redo();
+        } else {
+            Command.Redo(); //just execute and forget
         }
-        m_CurrentCmd = Math.max(-1, m_CmdStack.size() - 2);
-        Redo();
+        
     }
     public Boolean CanRedo()
     {
@@ -102,7 +107,6 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// </summary>
     public void Redo()
     {
-
         if (CanRedo())
         {
             m_CurrentCmd++;

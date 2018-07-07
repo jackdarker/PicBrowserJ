@@ -44,7 +44,7 @@ public class DatTagRel extends Vector<DatTagRel.Value> {
     }
 
     class Value {
-        public int Status=0;        //0 = new, 1=to delete , 2
+        public int Status=0;        //0 = new, 1=to delete , 2=
         public DatTag TagParent;
         public DatTag TagChild;
         public Value(DatTag tagParent, DatTag tagChild ) { 

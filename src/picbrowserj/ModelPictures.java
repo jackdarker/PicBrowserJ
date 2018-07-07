@@ -17,10 +17,14 @@
  */
 package picbrowserj;
 import java.awt.Color;
-import java.util.HashMap;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.ArrayList;
 import java.sql.*;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 /**
@@ -28,10 +32,10 @@ import java.util.List;
  * @author jkhome
  */
 interface ModelListener {
-    void EventPics_added(); //Picture loaded for browsing
-    void EventPics_moved(); 
-    void EventPics_viewed(); //Picture selected for viewing
-    void EventPics_new(); 
+    void EventPics_added(DatPicture Picture); //Picture loaded for browsing
+    void EventPics_moved(DatPicture Picture); 
+    void EventPics_viewed(DatPicture Picture); //Picture selected for viewing
+    void EventPics_new(DatPicture Picture); 
 }
 public class ModelPictures extends picbrowserj.Observable<ModelListener>{
     private static ModelPictures s_Instance;
@@ -96,6 +100,7 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                        " Path           TEXT    NOT NULL, " + 
                        " Name        CHAR(50), " + 
+                       " Status        INT, " + 
                        " Rating         REAL)"; 
           stmt.executeUpdate(sql);
           stmt.close();
@@ -103,6 +108,7 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
           sql = "CREATE TABLE TagDef " +        //definition of a Tag
                   "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
                   " Color        INT, " + 
+                  " Status        INT, " + 
                   " Tag        CHAR(50)) " ; 
           stmt.executeUpdate(sql);
           stmt.close();
@@ -117,6 +123,7 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
           stmt = s_DBConn.createStatement();
           sql = "CREATE TABLE Tags " +          //definition what tags a picture has
                        "(ID INTEGER PRIMARY KEY   AUTOINCREMENT," +
+                       " Status        INT, " + 
                        " IDListTags            INT     NOT NULL, " + 
                        "IDPicture            INT     NOT NULL )" ; 
           stmt.executeUpdate(sql);
@@ -237,11 +244,39 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
         if(Update) {
             sql = "Update TagDef Set Tag='"+Tag.Text+"',Color="+ 
                     String.format("%d",Tag.BGColor.getRGB()) +
+                   ",Status="+String.format("%d",Tag.Status)+
                     " where ID="+String.format("%d",Tag.IDListTags)+";";
         } else {
-            sql = "INSERT INTO TagDef (Tag,Color) " +
-                     "VALUES ( '"+Tag.Text+"',"+String.format("%d",Tag.BGColor.getRGB())+");"; 
+            sql = "INSERT INTO TagDef (Tag,Color,Status) " +
+                     "VALUES ( '"+Tag.Text+
+                    "',"+String.format("%d",Tag.BGColor.getRGB())+
+                    ", "+String.format("%d",Tag.Status)+
+                    ");"; 
         }
+        stmt.executeUpdate(sql);
+        stmt.close();
+        s_DBConn.commit();
+        CleanupDeadLinks();
+
+       } catch ( Exception e ) {
+          HandleDBError( e);
+       }
+        if(!Update) {   //tag is new, add them to local collection
+           RefreshTagListID(Tag); //fetch ID after Insert
+           s_Tags.add(Tag);
+        }
+        
+    }
+    //Todo delete entrys with IDs pointing nowhere
+    private void CleanupDeadLinks() {
+        Statement stmt = null;
+        String sql="";
+        Boolean Update=false;
+        int id = -1;
+        try {            
+        s_DBConn.setAutoCommit(false);
+        stmt = s_DBConn.createStatement();
+        sql = "Delete from TagDef where Status=1;";     //TODO also remove Relations to pictures and childtags: 
         stmt.executeUpdate(sql);
         stmt.close();
         s_DBConn.commit();
@@ -249,7 +284,6 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
        } catch ( Exception e ) {
           HandleDBError( e);
        }
-        Update = RefreshTagListID(Tag);
     }
     private Boolean RefreshPictureID(DatPicture Pic ) {
         Statement stmt = null;
@@ -487,12 +521,44 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
     public ArrayList<DatPicture> getNewPictures() {    
         return  s_PicturesNew;
     }
+    //Moves a picture physically to a directory
+    //if the picture exists in DB - updates the data in DB
+    //fires eventPics_moved when done
+    public void MovePicture(DatPicture Pic, String NewPath) throws IOException {
+        //we cannot assume that Pic is already in DB ! Only path might be set.
+        Path _old = Paths.get(Pic.Path);
+        Path _new = Paths.get(NewPath+"/"+_old.getFileName());
+        //TODO show dialog to ack overwrite/renaming of files
+        Files.move(_old, _new, REPLACE_EXISTING);
+        //TODO save picture in DB or update path
+        //Todo fire move event
+    }
     /// Adds a newly selected Picture to the unsaved-Picture List
     /// If the Picture is already in the list, it is replaced
     /// If the Picture is already in DB it is ignored
     public void AddNewPicture(DatPicture Pic) {
         //Todo ??
         s_PicturesNew.add(Pic);
+    }
+    public DatPicture getPictureByPath(String Text) {
+        DatPicture x;
+        Iterator<DatPicture> it= s_Pictures.iterator();
+        while (it.hasNext()) {
+            x=it.next();
+            if (x.Path.compareTo(Text)==0)
+                return x;
+        }
+        return null;
+    }
+    public DatPicture getPictureByID(int ID) {
+        DatPicture x;
+        Iterator<DatPicture> it= s_Pictures.iterator();
+        while (it.hasNext()) {
+            x=it.next();
+            if (x.ID==ID)
+                return x;
+        }
+        return null;
     }
     private void LoadTags() {
         s_Tags.clear();//s_Tags = new ArrayList<DatTag>();
@@ -552,8 +618,13 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
     }
     
     public DatTag addTag(DatTag Tag) {
-        s_Tags.add(Tag);
         UpdateTags(Tag);
+        return Tag;
+    }
+    //TODO
+    public DatTag deleteTag(DatTag Tag) {
+        removeRelation(Tag);
+        
         return Tag;
     }
     
@@ -577,19 +648,20 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
         List<DatTag> rel=s_TagsRelation.get(Me,false);
         return rel;
     }
-    public ArrayList<DatTag> getAllTags() {
-        return  s_Tags;
+    //returns an unmodifiableList List of all Tags
+    public List<DatTag> getAllTags() {
+        return Collections.unmodifiableList(Collections.list(Collections.enumeration(s_Tags)));
     }
-    void onEventPics_added() {
-        for(ModelListener l: listeners) l.EventPics_added();
+    void onEventPics_added(DatPicture Picture) {
+        for(ModelListener l: listeners) l.EventPics_added(Picture);
     }
-    void onEventPics_moved(){
-        for(ModelListener l: listeners) l.EventPics_added();
+    void onEventPics_moved(DatPicture Picture){
+        for(ModelListener l: listeners) l.EventPics_moved(Picture);
     } 
-    void onEventPics_viewed(){
-        for(ModelListener l: listeners) l.EventPics_added();
+    void onEventPics_viewed(DatPicture Picture){
+        for(ModelListener l: listeners) l.EventPics_viewed(Picture);
     }
-    void onEventPics_new(){
-        for(ModelListener l: listeners) l.EventPics_added();
+    void onEventPics_new(DatPicture Picture){
+        for(ModelListener l: listeners) l.EventPics_new(Picture);
     }
 }

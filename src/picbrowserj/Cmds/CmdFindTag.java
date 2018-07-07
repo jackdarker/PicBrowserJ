@@ -40,15 +40,19 @@ public class CmdFindTag extends CmdCreateTag {
     public boolean CanUndo() {
         return false;
     }
-
+    @Override
+    public boolean IgnoreAsUndoRedo() {
+        return false;
+    }
     @Override
     public void Redo() {
         try {
         if(m_NewTag==null) {
             ExecPostAction(new CmdResultAdd(false,"not a tag",null));
-        } //??
+        } else {
             ExecPostAction(new CmdResultAdd(true,"", 
                 ModelPictures.getInstance().getTagByText(m_NewTag.Text)));
+        }
         } catch(Exception ex) {
             java.util.logging.Logger.getLogger(CmdFindTag.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);;
         }

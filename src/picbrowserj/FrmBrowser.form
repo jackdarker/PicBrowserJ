@@ -132,6 +132,9 @@
           <SubComponents>
             <Component class="javax.swing.JTree" name="jTree1">
               <Properties>
+                <Property name="dropMode" type="javax.swing.DropMode" editor="org.netbeans.modules.form.editors.EnumEditor">
+                  <Value id="INSERT"/>
+                </Property>
                 <Property name="showsRootHandles" type="boolean" value="true"/>
                 <Property name="toggleClickCount" type="int" value="1"/>
               </Properties>

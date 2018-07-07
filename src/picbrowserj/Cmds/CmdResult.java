@@ -17,12 +17,11 @@
  */
 package picbrowserj.Cmds;
 
-import picbrowserj.Interface.Callable;
 import picbrowserj.Interface.CmdResultInterface;
 
 /**
  *
- * @author jkhome
+ * a subclass used by the commands to return if the command succeeded or not
  */
 public class CmdResult implements CmdResultInterface{
 

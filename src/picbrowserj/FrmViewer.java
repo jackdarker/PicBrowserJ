@@ -14,6 +14,8 @@ import java.util.Observer;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import picbrowserj.Cmds.CmdViewPicture;
+import picbrowserj.Interface.CmdInterface;
 
 /**
  *
@@ -147,10 +149,12 @@ public class FrmViewer extends javax.swing.JFrame
         if (jList1.getMaxSelectionIndex()<0) return;
         //Path=(DatPicture) jList1.getSelectedValue();
         DatPicture Pic =(DatPicture) jList1.getModel().getElementAt( jList1.getMaxSelectionIndex());
-        canvas1.showImage(Pic.Path);
-        MyObservable.UpdateReason reason;
+        
+        CmdInterface _Cmd = new CmdViewPicture(Pic,null);
+        _Cmd.Redo();
+        /*MyObservable.UpdateReason reason;
         reason = m_Observer.new UpdateReason(MyObservable.updateReasonEnum.Pics_viewed,Pic);
-        m_Observer.NotifyPicChanged(reason);
+        m_Observer.NotifyPicChanged(reason);*/
     }//GEN-LAST:event_jList1ValueChanged
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -184,23 +188,21 @@ public class FrmViewer extends javax.swing.JFrame
        updatePictures(null);
     }
     private void updatePictures(DatPicture Pic) {
-        //Todo  instead clearing entire list, delete/add different elements
-        MyList.clear();
-        ArrayList<DatPicture> paths1 = ModelPictures.getInstance().getNewPictures();
-        int i=0;
-        for(i=0; i< paths1.size();i++) {
-            MyList.addElement(paths1.get(i));
+        //if the picture is present in the list - dont add it another time
+        //just select it
+        if (Pic !=null) {
+            if (!MyList.contains(Pic)) MyList.addElement(Pic);
+            canvas1.showImage(Pic.Path);
+        } else {
+            canvas1.clearImage();
         }
-        ArrayList<DatPicture> paths2 = SrvPicManager.getInstance().getPicturesToView();
-        for(i=0; i< paths2.size();i++) {
-            MyList.addElement(paths2.get(i));
-
-        }
-        if (Pic !=null) jList1.setSelectedValue(Pic, true);
+        DatPicture _selected = (jList1.getSelectedValue()!=null)? ((DatPicture)jList1.getSelectedValue()):null;
+        if (Pic !=null && _selected.Path!=Pic.Path) //dont retrigger event again
+            jList1.setSelectedValue(Pic, true);
     }
     DefaultListModel<DatPicture> MyList = new DefaultListModel<>();
     
-    private MyObservable m_Observer= new MyObservable();
+   /* private MyObservable m_Observer= new MyObservable();
     public void registerObserver (Observer listener) {
         if (listener==null) return;
         m_Observer.addObserver(listener);
@@ -208,7 +210,7 @@ public class FrmViewer extends javax.swing.JFrame
     public void unregisterObserver (Observer listener) {
         if (listener==null) return;
         m_Observer.deleteObserver(listener);
-    }
+    }*/
     
     
     /**
@@ -260,22 +262,24 @@ public class FrmViewer extends javax.swing.JFrame
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void EventPics_added() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void EventPics_added(DatPicture Picture) {
+       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public void EventPics_moved() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void EventPics_moved(DatPicture Picture) {
+       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
-    public void EventPics_viewed() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void EventPics_viewed(DatPicture Picture) {
+        if (Picture != null) {
+            updatePictures(Picture);
+        }
     }
 
     @Override
-    public void EventPics_new() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void EventPics_new(DatPicture Picture) {
+       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

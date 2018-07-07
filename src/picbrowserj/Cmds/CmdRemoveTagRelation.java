@@ -33,12 +33,15 @@ public class CmdRemoveTagRelation implements CmdInterface {
     public void Undo() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
+    @Override
+    public boolean IgnoreAsUndoRedo() {
+        return false;
+    }
     @Override
     public boolean CanUndo() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
+//TODO
     @Override
     public void Redo() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.

@@ -29,6 +29,10 @@ public class Canvas extends JPanel {
         image1 = new ImageIcon(Path).getImage();
         rescaleImage();
     }
+    public void clearImage() {
+        image1 = null;
+        this.repaint();
+    }
     public void rescaleImage() {
         if (image1==null) return;
         //scale image but maintain ratio

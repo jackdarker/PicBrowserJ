@@ -195,7 +195,6 @@ public class MDIApplication extends javax.swing.JFrame {
     private void newBrowser(){
         FrmBrowser frmBrowser = new FrmBrowser();
         frmBrowser.setVisible(true);
-        frmBrowser.registerObserver(SrvPicManager.getInstance());
         frmBrowser.registerToObserver(SrvPicManager.getInstance());
         this.desktopPane.add(frmBrowser);     
     }

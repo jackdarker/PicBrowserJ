@@ -37,10 +37,17 @@ public class DatPicture {
     public String Name;
     public int ID;
     public int Rating;
+    public int Status=0;
     public ArrayList<DatTag> Tags=new ArrayList<DatTag>();
     
+    public void removeTag(DatTag obj) {
+        Tags.remove(obj);
+    }
     public void addTag(DatTag obj) {
-        Tags.add(obj);
+        if (!Tags.contains(obj)) Tags.add(obj);
+    }
+    public void setTags(ArrayList<DatTag> obj) {
+        Tags= new ArrayList<DatTag>(obj);
     }
     public Boolean RequiresTagUpload() {
         Boolean _ret=false;

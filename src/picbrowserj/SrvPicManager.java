@@ -6,29 +6,28 @@
 package picbrowserj;
 
 import java.util.ArrayList;
-import java.util.Observer;
-import java.util.Observable;
 
 /**
  *
  * @author jkhome
  */
 interface SrvPicManagerListener {
-    void EventPics_added(); //Picture loaded for browsing
-    void EventPics_moved(); 
-    void EventPics_viewed(); //Picture selected for viewing
-    void EventPics_new(); 
+    void EventPics_added(DatPicture Picture); //Picture loaded for browsing
+    void EventPics_moved(DatPicture Picture); 
+    void EventPics_viewed(DatPicture Picture); //Picture selected for viewing
+    void EventPics_new(DatPicture Picture); 
 }
 public class SrvPicManager 
         extends picbrowserj.Observable<SrvPicManagerListener> 
-        implements ModelListener,java.util.Observer{
+        implements ModelListener//,java.util.Observer
+{
     
     private static SrvPicManager s_Instance;
     private SrvPicManager() {
         ModelPictures.init();
     }
 
-    @Override
+   /*@Override
    public void update(Observable obs, Object obj)
    {
        try {
@@ -37,14 +36,14 @@ public class SrvPicManager
                 case Pics_new:
                    // updatePicture(reason.Picture);
                     ModelPictures.getInstance().AddNewPicture(reason.Picture);
-                    onEventPics_added(); 
+                    onEventPics_added(null); 
                     break;
                 default:
                     break;
             }
         } catch (ClassCastException e) {
         }
-   }
+   }*/
     public static boolean init() {
         if (s_Instance==null) {
             s_Instance= new SrvPicManager();
@@ -69,7 +68,7 @@ public class SrvPicManager
    
 
     private void loadData(){
-        onEventPics_added();
+        onEventPics_added(null);
     }
     
     public void SavePicture(DatPicture Pic) {
@@ -80,36 +79,36 @@ public class SrvPicManager
         Cmd.Redo();
     }
     // Events raised by Service
-    void onEventPics_added() {
-        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    void onEventPics_added(DatPicture Picture) {
+        for(SrvPicManagerListener l: listeners) l.EventPics_added(Picture);
     }
-    void onEventPics_moved(){
-        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    void onEventPics_moved(DatPicture Picture){
+        for(SrvPicManagerListener l: listeners) l.EventPics_moved(Picture);
     } 
-    void onEventPics_viewed(){
-        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    void onEventPics_viewed(DatPicture Picture){
+        for(SrvPicManagerListener l: listeners) l.EventPics_viewed(Picture);
     }
-    void onEventPics_new(){
-        for(SrvPicManagerListener l: listeners) l.EventPics_added();
+    void onEventPics_new(DatPicture Picture){
+        for(SrvPicManagerListener l: listeners) l.EventPics_new(Picture);
     }
     // Events received from Model
     @Override
-    public void EventPics_added() {
-        onEventPics_added();
+    public void EventPics_added(DatPicture Picture) {
+        onEventPics_added(Picture);
     }
 
     @Override
-    public void EventPics_moved() {
-        onEventPics_moved();
+    public void EventPics_moved(DatPicture Picture) {
+        onEventPics_moved(Picture);
     }
 
     @Override
-    public void EventPics_viewed() {
-        onEventPics_viewed();
+    public void EventPics_viewed(DatPicture Picture) {
+        onEventPics_viewed(Picture);
     }
 
     @Override
-    public void EventPics_new() {
-        onEventPics_new();
+    public void EventPics_new(DatPicture Picture) {
+        onEventPics_new(Picture);
     }
 }

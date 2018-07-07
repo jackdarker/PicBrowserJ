@@ -59,6 +59,7 @@ public class DatTag  {
     public String Text;
     public Color BGColor;
     public Boolean IsGroup;
+    public int Status=0;
     public int IDListTags;  //primarykey of the tag-definition
     public int IDTags;  //primarykey of the tag-picture relation
     

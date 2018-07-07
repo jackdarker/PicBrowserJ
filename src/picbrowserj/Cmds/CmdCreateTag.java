@@ -55,10 +55,14 @@ public class CmdCreateTag implements CmdInterface {
         try {
             ExecPostAction(new CmdResultAdd(false, "not supported",null));
         } catch(Exception ex) {
-            java.util.logging.Logger.getLogger(CmdCreateTag.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);;
+            java.util.logging.Logger.getLogger(CmdCreateTag.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
     }
 
+    @Override
+    public boolean IgnoreAsUndoRedo() {
+        return false;
+    }
     @Override
     public boolean CanUndo() {
         return false;
@@ -69,11 +73,12 @@ public class CmdCreateTag implements CmdInterface {
         try {
         if(m_NewTag==null) {
             ExecPostAction(new CmdResultAdd(false,"not a tag",null));
-        } //??
+        } else {
             ExecPostAction(new CmdResultAdd(true,"", 
                 ModelPictures.getInstance().addTag(m_NewTag)));
-        } catch(Exception e) {
-            ;
+        }
+        } catch(Exception ex) {
+            java.util.logging.Logger.getLogger(CmdAssignTags.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
     }
 

@@ -24,6 +24,8 @@ package picbrowserj.Interface;
  */
 public interface CmdInterface {
     
+    //if true this command will execute on Redo but will not be pushed to CmdStack
+    boolean IgnoreAsUndoRedo(); 
     void Undo();
     boolean CanUndo();
     void Redo();
