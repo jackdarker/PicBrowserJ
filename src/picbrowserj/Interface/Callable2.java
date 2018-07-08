@@ -21,7 +21,7 @@ package picbrowserj.Interface;
  *
  * @author jkhome
  */
-public interface Callable<T> {
-  void call(T model) throws Exception;
+public interface Callable2<T,Z> {
+  CmdResultInterface call(T arg1,Z arg2) throws Exception;
 }
 

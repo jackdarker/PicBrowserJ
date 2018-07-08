@@ -41,8 +41,11 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import picbrowserj.Cmds.CmdMovePicture;
+import picbrowserj.Cmds.CmdResult;
 import picbrowserj.Cmds.CmdViewPicture;
+import picbrowserj.Interface.Callable2;
 import picbrowserj.Interface.CmdInterface;
+import picbrowserj.Interface.CmdResultInterface;
 /**
  *
  * @author homeadmin
@@ -133,6 +136,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         jButton3 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        jButton6 = new javax.swing.JButton();
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
@@ -234,6 +238,18 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
         jToolBar3.add(filler1);
 
+        jButton6.setText(">>");
+        jButton6.setFocusable(false);
+        jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton6.setSelected(true);
+        jButton6.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
+        jToolBar3.add(jButton6);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -306,6 +322,11 @@ public class FrmBrowser extends javax.swing.JInternalFrame
        if (jComboBox1.getSelectedIndex()+1==m_Page) return;
        //updateFileList(m_Root,jComboBox1.getSelectedIndex()+1);
     }//GEN-LAST:event_jComboBox1ItemStateChanged
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete File?","this file");
+        String txt=_dlg.getValidatedText();
+    }//GEN-LAST:event_jButton6ActionPerformed
 
     private boolean m_DirMode;
     private void toggleMode() {
@@ -621,8 +642,13 @@ void updateFileList(String Root, int Page) {
                 ((DefaultMutableTreeNode)jTree1.getSelectionPath().getLastPathComponent());
                 if (selectedNode.getUserObject().getClass()== FileNode.class) {
                     String NewPath = ((FileNode)selectedNode.getUserObject()).getFile().getPath();
-                    CmdInterface _Cmd = new CmdMovePicture(_Pic,NewPath,null);
-                    _Cmd.Redo();
+                    String[] buttons={"Move","Cancle","Delete"};
+                    FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete File?",
+                            buttons,
+                            new FileMove(_Pic)) ,
+                            data);
+                    
+                    
                     return true;
                 }
                 
@@ -638,6 +664,23 @@ void updateFileList(String Root, int Page) {
                 targetList.setText(data);
             }*/
             return false;
+        }
+    }
+    class FileMove implements Callable2<Integer,String> {
+        DatPicture m_Pic;
+        public FileMove(DatPicture Pic) {
+            m_Pic =Pic;
+        }
+        @Override
+        public CmdResultInterface call(Integer Bt,String Name) throws Exception {
+            if (Bt==1) {
+                CmdInterface _Cmd = new CmdMovePicture(m_Pic,Name,null);
+                _Cmd.Redo(); 
+                return new CmdResult(true,"");
+            } else if(Bt==2) {
+                return new CmdResult(true,"");
+            }
+            return new CmdResult(true,"");
         }
     }
 // Drag n Drop support
@@ -853,6 +896,7 @@ class TreeTransferHandler extends TransferHandler {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JList<DatPicture> jList1;
     private javax.swing.JScrollPane jScrollPane1;
