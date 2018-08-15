@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.DefaultListModel;
@@ -105,10 +106,10 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
     }
     private void saveLayout() {
-        SaveLoadSettings.getInstance().SetRect(getTitle(), getBounds());
+        SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
     }
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle());
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }
@@ -324,7 +325,8 @@ public class FrmBrowser extends javax.swing.JInternalFrame
     }//GEN-LAST:event_jComboBox1ItemStateChanged
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete File?","this file");
+        String[] _Bts = {"Delete","Delete File?","this file"};
+        FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete this?",_Bts,null,"");
         String txt=_dlg.getValidatedText();
     }//GEN-LAST:event_jButton6ActionPerformed
 
@@ -344,7 +346,6 @@ public class FrmBrowser extends javax.swing.JInternalFrame
    {
    }*/
    public void registerToObserver(SrvPicManager obs) {
-      // obs.addObserver(this);
       SrvPicManager.getInstance().addListener(this);
    } 
    
@@ -417,7 +418,7 @@ void updateFileList(String Root, int Page) {
         CreateIcons ci = new CreateIcons();
         new Thread(ci).start();
     }
-    int m_PicsPerPage=40;
+    int m_PicsPerPage=40;   //Number Pics per Page
 
     @Override
     public void EventPics_added(DatPicture Picture) {
@@ -426,7 +427,15 @@ void updateFileList(String Root, int Page) {
 
     @Override
     public void EventPics_moved(DatPicture Picture) {
-       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //update Picture List in case the picture was added/removed from this directory
+        boolean _upd=false; 
+        Enumeration<DatPicture> en =MyList.elements();
+        while (en.hasMoreElements()&& !_upd) {
+            _upd = (en.nextElement().ID==Picture.ID);      
+        }
+        if(_upd) {
+            updateFileList(m_Root,m_Page);
+        }
     }
 
     @Override
@@ -643,13 +652,11 @@ void updateFileList(String Root, int Page) {
                 if (selectedNode.getUserObject().getClass()== FileNode.class) {
                     String NewPath = ((FileNode)selectedNode.getUserObject()).getFile().getPath();
                     String[] buttons={"Move","Cancle","Delete"};
-                    FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete File?",
-                            buttons,
-                            new FileMove(_Pic)) ,
-                            data);
-                    
-                    
-                    return true;
+                    FrmDialog3Bt _dlg=new FrmDialog3Bt(null,
+                            "Move","Move File?",buttons,
+                            new FileMove(_Pic,NewPath) ,
+                            Paths.get(_Pic.Path).getFileName().toString());
+                    return false;
                 }
                 
                 /*
@@ -668,16 +675,20 @@ void updateFileList(String Root, int Page) {
     }
     class FileMove implements Callable2<Integer,String> {
         DatPicture m_Pic;
-        public FileMove(DatPicture Pic) {
+        String m_NewPath;
+        public FileMove(DatPicture Pic, String NewPath) {
             m_Pic =Pic;
+            m_NewPath=NewPath;
         }
         @Override
         public CmdResultInterface call(Integer Bt,String Name) throws Exception {
             if (Bt==1) {
-                CmdInterface _Cmd = new CmdMovePicture(m_Pic,Name,null);
+                Path _New =Paths.get(m_NewPath,Name).toAbsolutePath();
+                CmdInterface _Cmd = new CmdMovePicture(m_Pic,_New,null);
                 _Cmd.Redo(); 
                 return new CmdResult(true,"");
-            } else if(Bt==2) {
+            } else if(Bt==3) {
+                //todo delete
                 return new CmdResult(true,"");
             }
             return new CmdResult(true,"");

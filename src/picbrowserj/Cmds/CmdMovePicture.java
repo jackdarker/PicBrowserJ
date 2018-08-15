@@ -17,6 +17,7 @@
  */
 package picbrowserj.Cmds;
 
+import java.nio.file.Path;
 import picbrowserj.DatPicture;
 import picbrowserj.Interface.CmdInterface;
 import picbrowserj.Interface.Callable;
@@ -30,9 +31,9 @@ import picbrowserj.SrvPicManager;
 public class CmdMovePicture implements CmdInterface {
 
     protected DatPicture m_Picture=null;
-    protected String m_NewPath;
+    protected Path m_NewPath;
     protected Callable<CmdResult> m_PostAction;
-    public CmdMovePicture(DatPicture Picture, String NewPath,Callable<CmdResult> PostAction) {
+    public CmdMovePicture(DatPicture Picture, Path NewPath,Callable<CmdResult> PostAction) {
         m_Picture = Picture;
         m_NewPath=NewPath;
         m_PostAction = PostAction;

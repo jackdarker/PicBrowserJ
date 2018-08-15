@@ -524,14 +524,16 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
     //Moves a picture physically to a directory
     //if the picture exists in DB - updates the data in DB
     //fires eventPics_moved when done
-    public void MovePicture(DatPicture Pic, String NewPath) throws IOException {
+    public void MovePicture(DatPicture Pic, Path NewPath) throws IOException {
         //we cannot assume that Pic is already in DB ! Only path might be set.
         Path _old = Paths.get(Pic.Path);
-        Path _new = Paths.get(NewPath+"/"+_old.getFileName());
+        //Path _new = Paths.get(NewPath+"/"+_old.getFileName());
+        
         //TODO show dialog to ack overwrite/renaming of files
-        Files.move(_old, _new, REPLACE_EXISTING);
+        Files.move(_old, NewPath, REPLACE_EXISTING);
+        Pic.Path=NewPath.toString();
         //TODO save picture in DB or update path
-        //Todo fire move event
+        this.onEventPics_moved(Pic);
     }
     /// Adds a newly selected Picture to the unsaved-Picture List
     /// If the Picture is already in the list, it is replaced
@@ -653,15 +655,15 @@ public class ModelPictures extends picbrowserj.Observable<ModelListener>{
         return Collections.unmodifiableList(Collections.list(Collections.enumeration(s_Tags)));
     }
     void onEventPics_added(DatPicture Picture) {
-        for(ModelListener l: listeners) l.EventPics_added(Picture);
+        SrvPicManager.getInstance().EventPics_added(Picture);//for(ModelListener l: listeners) l.EventPics_added(Picture);
     }
     void onEventPics_moved(DatPicture Picture){
-        for(ModelListener l: listeners) l.EventPics_moved(Picture);
+        SrvPicManager.getInstance().EventPics_moved(Picture);//for(ModelListener l: listeners) l.EventPics_moved(Picture);
     } 
     void onEventPics_viewed(DatPicture Picture){
-        for(ModelListener l: listeners) l.EventPics_viewed(Picture);
+        SrvPicManager.getInstance().EventPics_viewed(Picture);//for(ModelListener l: listeners) l.EventPics_viewed(Picture);
     }
     void onEventPics_new(DatPicture Picture){
-        for(ModelListener l: listeners) l.EventPics_new(Picture);
+        SrvPicManager.getInstance().EventPics_new(Picture);//for(ModelListener l: listeners) l.EventPics_new(Picture);
     }
 }

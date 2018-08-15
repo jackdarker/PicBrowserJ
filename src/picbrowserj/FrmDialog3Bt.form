@@ -106,7 +106,8 @@
     </Component>
     <Component class="java.awt.Button" name="button3">
       <Properties>
-        <Property name="label" type="java.lang.String" value="button2"/>
+        <Property name="actionCommand" type="java.lang.String" value="button3"/>
+        <Property name="label" type="java.lang.String" value="button3"/>
         <Property name="name" type="java.lang.String" value="bt3" noResource="true"/>
       </Properties>
       <Events>

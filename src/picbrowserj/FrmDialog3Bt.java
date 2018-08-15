@@ -81,7 +81,7 @@ public class FrmDialog3Bt extends JDialog {
             case 2:
                 this.button2.setLabel(Buttons[1]);
             case 1:
-                this.button2.setLabel(Buttons[0]);
+                this.button1.setLabel(Buttons[0]);
                 break;
             default:
                 break;
@@ -153,7 +153,8 @@ public class FrmDialog3Bt extends JDialog {
             }
         });
 
-        button3.setLabel("button2");
+        button3.setActionCommand("button3");
+        button3.setLabel("button3");
         button3.setName("bt3"); // NOI18N
         button3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

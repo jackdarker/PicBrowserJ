@@ -71,22 +71,22 @@ public class SaveLoadSettings {
             System.err.println("no user setup");
         }
     }
-    public Integer GetElementCount(String Element) {
-        String _tmp=applicationProps.getProperty(Element);
+    public Integer GetElementCount(String Window) {
+        String _tmp=applicationProps.getProperty(Window);
         if (_tmp==null) return 0;
         return Integer.decode(_tmp);
     }
-    public void SetElementCount(String Element, Integer Count) {
-        applicationProps.setProperty(Element,
+    public void SetElementCount(String Window, String Name, Integer Count) {
+        applicationProps.setProperty(Window+Name,
                 String.format("%d",Count));
     }
-    public void SetRect(String WindowName , Rectangle Rect){
-        applicationProps.setProperty(WindowName,
+    public void SetRect(String Window, String Name , Rectangle Rect){
+        applicationProps.setProperty(Window+Name,
                 String.format("%d;%d;%d;%d;", 
                         Rect.x,Rect.y,Rect.width,Rect.height));
     }
-    public Rectangle GetRect(String WindowName) {
-        String _tmp=applicationProps.getProperty(WindowName);
+    public Rectangle GetRect(String Window, String Name) {
+        String _tmp=applicationProps.getProperty(Window+Name);
         if (_tmp==null) return null;
         //Todo add checking
         String[] _tmpArr =_tmp.split(";");

@@ -34,18 +34,18 @@ public class FrmViewer extends javax.swing.JFrame
         addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            saveLayout();
+            if(isShowing())saveLayout();
         }
         });
     }
 
-    private void saveLayout() {
+    public void saveLayout() {
         SaveLoadSettings.getInstance().SetRect(
-                this.getClass().getName(), getBounds());
+                this.getClass().getName(), "Window", getBounds());
     }
     private void restoreLayout() {
         Rectangle Rect =SaveLoadSettings.getInstance().GetRect(
-                this.getClass().getName());
+                this.getClass().getName(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }

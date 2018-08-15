@@ -62,18 +62,22 @@ public class FrmPictureInfo
 
     private DatTag TagToEdit;
     final static String CANCEL_ACTION = "cancel-search";
-
+    private static int s_Count;
+    private int m_ID;
     /**
      * Creates new form FrmPictureInfo
      */
     public FrmPictureInfo() {
+        s_Count++;
+        m_ID=s_Count;
         initComponents();
+
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 saveLayout();
-            }
+            }            
         });
         jListAvailableTags.setModel(new DefaultListModel<DatTag>());
         jListAssignedTags.setModel(new DefaultListModel<DatTag>());
@@ -172,12 +176,12 @@ public class FrmPictureInfo
 
     private void saveLayout() {
         SaveLoadSettings.getInstance().SetRect(
-                this.getClass().getName(), getBounds());
+                this.getClass().getName(), "Window", getBounds());
     }
 
     private void restoreLayout() {
         Rectangle Rect = SaveLoadSettings.getInstance().GetRect(
-                this.getClass().getName());
+                this.getClass().getName(), "Window");
         if (Rect != null) {
             this.setBounds(Rect);
         }

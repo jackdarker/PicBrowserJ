@@ -24,4 +24,3 @@ package picbrowserj.Interface;
 public interface Callable2<T,Z> {
   CmdResultInterface call(T arg1,Z arg2) throws Exception;
 }
-

@@ -6,8 +6,11 @@
 package picbrowserj;
 
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Vector;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 /**
@@ -30,10 +33,25 @@ public class MDIApplication extends javax.swing.JFrame {
             SaveLoadSettings.getInstance().Save();
         }
         });*/
-
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                Window[] windows = getWindows();
+                for (Window window : windows)
+                {
+                    if (window instanceof FrmViewer)
+                    {
+                        ((FrmViewer)window).saveLayout();
+                        window.setVisible(false);
+                        window.dispose();
+                    }
+                }
+            }            
+        });
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
         public void run() {
             // Do what you want when the application is stopping
+            
             saveLayout();
             SaveLoadSettings.getInstance().Save();
         }
@@ -171,6 +189,8 @@ public class MDIApplication extends javax.swing.JFrame {
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         //Todo trigger controlled shutdown of other windows
+
+    
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
@@ -178,10 +198,10 @@ public class MDIApplication extends javax.swing.JFrame {
         newBrowser();
     }//GEN-LAST:event_viewMenuNewBrowserActionPerformed
     private void saveLayout() {
-        SaveLoadSettings.getInstance().SetRect(this.getClass().getName(), getBounds());
+        SaveLoadSettings.getInstance().SetRect(this.getClass().getName(), "Window", getBounds());
     }
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(this.getClass().getName());
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(this.getClass().getName(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }
@@ -192,17 +212,21 @@ public class MDIApplication extends javax.swing.JFrame {
         restoreViewer();
         
     }//GEN-LAST:event_viewMenuNewViewerActionPerformed
+    private Vector<JComponent> m_Childs= new Vector<>();
     private void newBrowser(){
         FrmBrowser frmBrowser = new FrmBrowser();
+        m_Childs.add(frmBrowser);
         frmBrowser.setVisible(true);
         frmBrowser.registerToObserver(SrvPicManager.getInstance());
         this.desktopPane.add(frmBrowser);     
     }
     private void restoreViewer(){
         FrmViewer frmViewer = new FrmViewer();
+        
         frmViewer.setVisible(true);     
         frmViewer.registerToObserver(SrvPicManager.getInstance());
         FrmPictureInfo frmPicInfo = new FrmPictureInfo();
+        
         frmPicInfo.setVisible(true);     
         frmPicInfo.registerToObserver(SrvPicManager.getInstance());
       //??  frmViewer.registerObserver(frmPicInfo);
