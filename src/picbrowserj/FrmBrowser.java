@@ -47,19 +47,22 @@ import picbrowserj.Cmds.CmdViewPicture;
 import picbrowserj.Interface.Callable2;
 import picbrowserj.Interface.CmdInterface;
 import picbrowserj.Interface.CmdResultInterface;
+import picbrowserj.Interface.FrmInterface;
 /**
  *
  * @author homeadmin
  */
 public class FrmBrowser extends javax.swing.JInternalFrame  
-    implements SrvPicManagerListener,TreeSelectionListener {
+    implements SrvPicManagerListener,TreeSelectionListener,FrmInterface {
 
-
+    static int openFrameCount = 0;
+    static final int xOffset = 30, yOffset = 30;
     /**
      * Creates new form FrmBrowser
      */
     public FrmBrowser() {
-        super("FrmBrowser" ,
+        
+        super("FrmBrowser"+(++openFrameCount) ,
           true, //resizable
           true, //closable
           true, //maximizable
@@ -83,6 +86,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
                 updateBrowserTree();
             }
           });
+          setLocation(xOffset*openFrameCount, yOffset*openFrameCount);
           restoreLayout();
           jList1.setCellRenderer(new ListCellRendererPicture(Icons));
           jList1.setModel(MyList);
@@ -105,8 +109,11 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         }
 
     }
-    private void saveLayout() {
-        SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+    @Override
+    public void saveLayout() {
+        if(isVisible()) {
+            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+        }
     }
     private void restoreLayout() {
         Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
@@ -125,44 +132,44 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jToolBar1 = new javax.swing.JToolBar();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        btDirView = new javax.swing.JButton();
+        btDBView = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTree1 = new javax.swing.JTree();
         jToolBar3 = new javax.swing.JToolBar();
-        jComboBox1 = new javax.swing.JComboBox<>();
-        jButton3 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
+        cbPages = new javax.swing.JComboBox<>();
+        btPrevPage = new javax.swing.JButton();
+        btNextPage = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-        jButton6 = new javax.swing.JButton();
+        btDelete = new javax.swing.JButton();
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
-        jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton1.setLabel("Directory");
-        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btDirView.setFocusable(false);
+        btDirView.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btDirView.setLabel("Directory");
+        btDirView.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btDirView.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btDirViewActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton1);
+        jToolBar1.add(btDirView);
 
-        jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton2.setLabel("Database");
-        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        btDBView.setFocusable(false);
+        btDBView.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btDBView.setLabel("Database");
+        btDBView.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btDBView.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                btDBViewActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton2);
+        jToolBar1.add(btDBView);
 
         jSplitPane1.setDividerLocation(200);
         jSplitPane1.setResizeWeight(0.5);
@@ -198,58 +205,58 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
         jToolBar3.setRollover(true);
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox1.addItemListener(new java.awt.event.ItemListener() {
+        cbPages.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbPages.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                jComboBox1ItemStateChanged(evt);
+                cbPagesItemStateChanged(evt);
             }
         });
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        cbPages.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                cbPagesActionPerformed(evt);
             }
         });
-        jToolBar3.add(jComboBox1);
+        jToolBar3.add(cbPages);
 
-        jButton3.setText("<<");
-        jButton3.setActionCommand("btPrevPage");
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        btPrevPage.setText("<<");
+        btPrevPage.setActionCommand("btPrevPage");
+        btPrevPage.setFocusable(false);
+        btPrevPage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btPrevPage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btPrevPage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                btPrevPageActionPerformed(evt);
             }
         });
-        jToolBar3.add(jButton3);
-        jButton3.getAccessibleContext().setAccessibleName("btPrevPage");
+        jToolBar3.add(btPrevPage);
+        btPrevPage.getAccessibleContext().setAccessibleName("btPrevPage");
 
-        jButton5.setText(">>");
-        jButton5.setFocusable(false);
-        jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton5.setSelected(true);
-        jButton5.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
+        btNextPage.setText(">>");
+        btNextPage.setFocusable(false);
+        btNextPage.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btNextPage.setSelected(true);
+        btNextPage.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btNextPage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
+                btNextPageActionPerformed(evt);
             }
         });
-        jToolBar3.add(jButton5);
-        jButton5.getAccessibleContext().setAccessibleName("btNextPage");
+        jToolBar3.add(btNextPage);
+        btNextPage.getAccessibleContext().setAccessibleName("btNextPage");
 
         jToolBar3.add(filler1);
 
-        jButton6.setText(">>");
-        jButton6.setFocusable(false);
-        jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton6.setSelected(true);
-        jButton6.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
+        btDelete.setText("Delete");
+        btDelete.setFocusable(false);
+        btDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btDelete.setSelected(true);
+        btDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
+                btDeleteActionPerformed(evt);
             }
         });
-        jToolBar3.add(jButton6);
+        jToolBar3.add(btDelete);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -285,13 +292,13 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         m_Observer.NotifyPicChanged(reason);*/
     }//GEN-LAST:event_jList1ValueChanged
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btDirViewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btDirViewActionPerformed
         toggleMode();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_btDirViewActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void btDBViewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btDBViewActionPerformed
         toggleMode();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_btDBViewActionPerformed
 
     private void jTree1TreeExpanded(javax.swing.event.TreeExpansionEvent evt) {//GEN-FIRST:event_jTree1TreeExpanded
         Object _Obj = evt.getPath().getLastPathComponent();
@@ -302,39 +309,39 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         
     }//GEN-LAST:event_jTree1TreeExpanded
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void cbPagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbPagesActionPerformed
 
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_cbPagesActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        int i = jComboBox1.getSelectedIndex()+1;
+    private void btPrevPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btPrevPageActionPerformed
+        int i = cbPages.getSelectedIndex()+1;
         i = Math.max(1, i-1);
         updateFileList(m_Root,i);
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_btPrevPageActionPerformed
 
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        int i = jComboBox1.getSelectedIndex()+1;
+    private void btNextPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btNextPageActionPerformed
+        int i = cbPages.getSelectedIndex()+1;
         i = Math.max(1, i+1);
         updateFileList(m_Root,i);
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_btNextPageActionPerformed
     Integer m_Page;
-    private void jComboBox1ItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jComboBox1ItemStateChanged
+    private void cbPagesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbPagesItemStateChanged
        if (evt.getStateChange()==ItemEvent.DESELECTED) return; 
-       if (jComboBox1.getSelectedIndex()+1==m_Page) return;
+       if (cbPages.getSelectedIndex()+1==m_Page) return;
        //updateFileList(m_Root,jComboBox1.getSelectedIndex()+1);
-    }//GEN-LAST:event_jComboBox1ItemStateChanged
+    }//GEN-LAST:event_cbPagesItemStateChanged
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void btDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btDeleteActionPerformed
         String[] _Bts = {"Delete","Delete File?","this file"};
         FrmDialog3Bt _dlg=new FrmDialog3Bt(null,"Delete","Delete this?",_Bts,null,"");
-        String txt=_dlg.getValidatedText();
-    }//GEN-LAST:event_jButton6ActionPerformed
+        String txt=_dlg.getValidatedText(); //Todo
+    }//GEN-LAST:event_btDeleteActionPerformed
 
     private boolean m_DirMode;
     private void toggleMode() {
         m_DirMode = !m_DirMode;
-        jButton1.setEnabled(!m_DirMode);
-        jButton2.setEnabled(m_DirMode);
+        btDirView.setEnabled(!m_DirMode);
+        btDBView.setEnabled(m_DirMode);
         if (m_DirMode) {
             jTree1.setModel(treeModelDir);
         } else {
@@ -354,6 +361,7 @@ String m_Root;
 void updateFileList(String Root, int Page) {
     m_Root = Root;
     m_Page = Page;
+    DatPicture Pic;
        MyList.clear();
        Icons.clear();
        Path dir =  Paths.get(Root);
@@ -367,17 +375,21 @@ void updateFileList(String Root, int Page) {
             if (i>= (Page-1)*m_PicsPerPage &&
                    i< (Page)*m_PicsPerPage  ) {
                 Icons.put(file.getFileName().toString(), new ImageIcon("resources/None.png"));
-                MyList.addElement(new DatPicture(file.toString(),file.getFileName().toString()));
+                Pic= ModelPictures.getInstance().getPictureByPath(file.toString());
+                if(Pic==null) {
+                   Pic = new DatPicture(file.toString(),file.getFileName().toString()); 
+                }
+                MyList.addElement(Pic);
             }
             i++;
         }
         
         int k= Math.max(Math.abs((i+1)/m_PicsPerPage)+1, 1);
-        jComboBox1.removeAllItems();
+        cbPages.removeAllItems();
         for(i=1;i<=k;i++) {
-            jComboBox1.addItem(String.valueOf(i));
+            cbPages.addItem(String.valueOf(i));
         }
-        jComboBox1.setSelectedItem(String.valueOf(Page));
+        cbPages.setSelectedItem(String.valueOf(Page));
         
         } catch (IOException | DirectoryIteratorException x) {
         // IOException can never be thrown by the iteration.
@@ -901,14 +913,14 @@ class TreeTransferHandler extends TransferHandler {
     }
 }*/
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btDBView;
+    private javax.swing.JButton btDelete;
+    private javax.swing.JButton btDirView;
+    private javax.swing.JButton btNextPage;
+    private javax.swing.JButton btPrevPage;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JComboBox<String> cbPages;
     private javax.swing.Box.Filler filler1;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JList<DatPicture> jList1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

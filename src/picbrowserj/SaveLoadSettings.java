@@ -18,6 +18,7 @@
 package picbrowserj;
 
 import java.awt.Rectangle;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,7 +29,6 @@ import java.util.Properties;
  * @author jkhome
  */
 public class SaveLoadSettings {
-    Properties applicationProps;
     
     public static boolean init() {
         if (s_Instance==null) {
@@ -39,7 +39,10 @@ public class SaveLoadSettings {
             return false;
         }
     }
-    private SaveLoadSettings() {}
+    private org.ini4j.Ini Ini;
+    private SaveLoadSettings() {
+        Ini = new org.ini4j.Ini();    
+    }
     private static SaveLoadSettings s_Instance;
     public static SaveLoadSettings getInstance() {
         if (s_Instance==null) {
@@ -49,14 +52,8 @@ public class SaveLoadSettings {
     }
     private String s_File="user.properties";
     public void Load() {
-        // create and load default properties
-        Properties defaultProps = new Properties();
-        defaultProps.setProperty("MainBounds", "0;0;200;200");
-
-        // create application properties with default
-        applicationProps = new Properties(defaultProps);
         try {
-            applicationProps.load(new FileInputStream(s_File));
+            Ini.load(new FileInputStream(s_File));
         } catch (IOException e) {
             System.err.println("no user setup");
             Save();
@@ -65,34 +62,24 @@ public class SaveLoadSettings {
     }
     public void Save() {
         try {
-            applicationProps.store(new FileOutputStream(s_File),"");
+            Ini.store(new FileOutputStream(s_File));
         } catch (IOException e) {
             //Todo ??
             System.err.println("no user setup");
         }
     }
-    public Integer GetElementCount(String Window) {
-        String _tmp=applicationProps.getProperty(Window);
-        if (_tmp==null) return 0;
-        return Integer.decode(_tmp);
-    }
-    public void SetElementCount(String Window, String Name, Integer Count) {
-        applicationProps.setProperty(Window+Name,
-                String.format("%d",Count));
-    }
     public void SetRect(String Window, String Name , Rectangle Rect){
-        applicationProps.setProperty(Window+Name,
-                String.format("%d;%d;%d;%d;", 
-                        Rect.x,Rect.y,Rect.width,Rect.height));
+        String _rect= String.format("%d/%d/%d/%d", Rect.x,Rect.y,Rect.width,Rect.height);
+        Ini.put(Window, Name, _rect);
     }
     public Rectangle GetRect(String Window, String Name) {
-        String _tmp=applicationProps.getProperty(Window+Name);
-        if (_tmp==null) return null;
-        //Todo add checking
-        String[] _tmpArr =_tmp.split(";");
-        Rectangle _rect = new Rectangle(
-                Integer.decode(_tmpArr[0]),Integer.decode(_tmpArr[1]),
-                Integer.decode(_tmpArr[2]),Integer.decode(_tmpArr[3]));
-        return _rect;
+        String _rect= Ini.get(Window,Name,String.class);
+        if(_rect==null) return null;
+        String[] _Values =_rect.split("/");
+        if(_Values.length!=4) return null;
+        Rectangle rect= new Rectangle(Integer.decode(_Values[0]),Integer.decode(_Values[1]),
+                Integer.decode(_Values[2]),Integer.decode(_Values[3]));
+        //Rectangle _rect=Ini.get(Window,Name,Rectangle.class); cannot parse rectangle??
+        return rect;
     }
 }

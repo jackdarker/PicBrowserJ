@@ -16,21 +16,24 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import picbrowserj.Cmds.CmdViewPicture;
 import picbrowserj.Interface.CmdInterface;
+import picbrowserj.Interface.FrmInterface;
 
 /**
  *
  * @author homeadmin
  */
 public class FrmViewer extends javax.swing.JFrame
-    implements SrvPicManagerListener {
-
+    implements SrvPicManagerListener, FrmInterface {
+    static int openFrameCount = 0;
     /**
      * Creates new form FrmViewer
      */
     public FrmViewer() {
         initComponents();
+        setTitle("Viewer"+(++openFrameCount));
         jList1.setModel(MyList);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        restoreLayout();
         addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
@@ -39,13 +42,14 @@ public class FrmViewer extends javax.swing.JFrame
         });
     }
 
+    @Override
     public void saveLayout() {
-        SaveLoadSettings.getInstance().SetRect(
-                this.getClass().getName(), "Window", getBounds());
+        if(isVisible()) {
+            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+        }
     }
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(
-                this.getClass().getName(), "Window");
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }

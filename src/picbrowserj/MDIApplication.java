@@ -9,9 +9,12 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.Vector;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import picbrowserj.Interface.FrmInterface;
 
 /**
  *
@@ -39,13 +42,23 @@ public class MDIApplication extends javax.swing.JFrame {
                 Window[] windows = getWindows();
                 for (Window window : windows)
                 {
-                    if (window instanceof FrmViewer)
+                    if (window instanceof FrmInterface)
                     {
-                        ((FrmViewer)window).saveLayout();
+                        ((FrmInterface)window).saveLayout();
                         window.setVisible(false);
                         window.dispose();
                     }
                 }
+                JInternalFrame[] frames=getAllFrames();
+                for (JInternalFrame window : frames)
+                {
+                    if (window instanceof FrmInterface)
+                    {
+                        ((FrmInterface)window).saveLayout();
+                        window.setVisible(false);
+                        window.dispose();
+                    }
+                } 
             }            
         });
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -212,10 +225,12 @@ public class MDIApplication extends javax.swing.JFrame {
         restoreViewer();
         
     }//GEN-LAST:event_viewMenuNewViewerActionPerformed
-    private Vector<JComponent> m_Childs= new Vector<>();
+    public javax.swing.JInternalFrame[] getAllFrames() {
+        return this.desktopPane.getAllFrames();
+    }
     private void newBrowser(){
+        
         FrmBrowser frmBrowser = new FrmBrowser();
-        m_Childs.add(frmBrowser);
         frmBrowser.setVisible(true);
         frmBrowser.registerToObserver(SrvPicManager.getInstance());
         this.desktopPane.add(frmBrowser);     
@@ -236,6 +251,7 @@ public class MDIApplication extends javax.swing.JFrame {
      */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
+        
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 

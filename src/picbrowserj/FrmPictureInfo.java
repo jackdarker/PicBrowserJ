@@ -51,6 +51,7 @@ import picbrowserj.Cmds.*;
 import picbrowserj.Cmds.CmdCreateTag.CmdResultAdd;
 import picbrowserj.Interface.Callable;
 import picbrowserj.Interface.CmdInterface;
+import picbrowserj.Interface.FrmInterface;
 
 /**
  *
@@ -58,18 +59,16 @@ import picbrowserj.Interface.CmdInterface;
  */
 public class FrmPictureInfo 
         extends javax.swing.JFrame 
-        implements SrvPicManagerListener, DocumentListener {
+        implements SrvPicManagerListener, DocumentListener, FrmInterface {
 
     private DatTag TagToEdit;
     final static String CANCEL_ACTION = "cancel-search";
-    private static int s_Count;
-    private int m_ID;
+    static int openFrameCount = 0;
     /**
      * Creates new form FrmPictureInfo
      */
     public FrmPictureInfo() {
-        s_Count++;
-        m_ID=s_Count;
+        setTitle("Info"+(++openFrameCount));
         initComponents();
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -97,7 +96,7 @@ public class FrmPictureInfo
         jListParentTags.setTransferHandler(new ListTransferHandler());
         jListParentTags.setCellRenderer(new DatTagCellRenderer());
         jTextNewTag.getDocument().addDocumentListener(this);
-
+        restoreLayout();
         InputMap im = jTextNewTag.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = jTextNewTag.getActionMap();
         im.put(KeyStroke.getKeyStroke("ESCAPE"), CANCEL_ACTION);
@@ -174,14 +173,15 @@ public class FrmPictureInfo
         SrvPicManager.getInstance().DoCmd(_Cmd); 
     }
 
-    private void saveLayout() {
-        SaveLoadSettings.getInstance().SetRect(
-                this.getClass().getName(), "Window", getBounds());
+    @Override
+    public void saveLayout() {
+        if(isVisible()) {
+            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+        }
     }
 
     private void restoreLayout() {
-        Rectangle Rect = SaveLoadSettings.getInstance().GetRect(
-                this.getClass().getName(), "Window");
+        Rectangle Rect = SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
         if (Rect != null) {
             this.setBounds(Rect);
         }
