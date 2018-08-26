@@ -23,5 +23,5 @@ package picbrowserj.Interface;
  */
 public interface FrmInterface {
     public void saveLayout();
-    
+    public String getWindowID();
 }

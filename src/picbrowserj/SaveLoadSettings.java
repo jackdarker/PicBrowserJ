@@ -68,6 +68,29 @@ public class SaveLoadSettings {
             System.err.println("no user setup");
         }
     }
+    public void SetString(String Window, String Name , String Value){
+        Ini.put(Window, Name, Value);
+    }
+    public String GetString(String Window, String Name) {
+        String _Ret= Ini.get(Window,Name,String.class);
+        return _Ret;
+    }
+    public void SetInt(String Window, String Name , Integer Value){
+        String _rect= String.format("%d", Value);
+        Ini.put(Window, Name, _rect);
+    }
+    public Integer GetInt(String Window, String Name) {
+         Integer _Ret=0;
+        String _rect= Ini.get(Window,Name,String.class);
+        try {
+            _Ret = Integer.decode(_rect);
+        }
+        catch(Exception Ex)
+        {
+            return null;
+        }
+        return _Ret;
+    }
     public void SetRect(String Window, String Name , Rectangle Rect){
         String _rect= String.format("%d/%d/%d/%d", Rect.x,Rect.y,Rect.width,Rect.height);
         Ini.put(Window, Name, _rect);

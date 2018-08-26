@@ -37,8 +37,10 @@ import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import picbrowserj.Cmds.CmdMovePicture;
@@ -60,14 +62,15 @@ public class FrmBrowser extends javax.swing.JInternalFrame
     /**
      * Creates new form FrmBrowser
      */
+    String m_WindowID;
     public FrmBrowser() {
-        
-        super("FrmBrowser"+(++openFrameCount) ,
+        super("Browser",
           true, //resizable
           true, //closable
           true, //maximizable
           true);//iconifiablesuper("Document #" + (++openFrameCount),
           initComponents();
+          m_WindowID = "Browser"+(++openFrameCount);
           this.addInternalFrameListener(new InternalFrameAdapter() {
             public void InternalFrameClosed(WindowEvent e) {
                saveLayout();
@@ -80,45 +83,74 @@ public class FrmBrowser extends javax.swing.JInternalFrame
             (TreeSelectionModel.SINGLE_TREE_SELECTION);
             //Listen for when the selection changes.
             jTree1.addTreeSelectionListener(this);
-          SwingUtilities.invokeLater(new Runnable() {
+          /*SwingUtilities.invokeLater(new Runnable() {
             @Override
-            public void run() {   
+            public void run() {   */
                 updateBrowserTree();
-            }
-          });
+          //  }
+          //});
+          
           setLocation(xOffset*openFrameCount, yOffset*openFrameCount);
-          restoreLayout();
           jList1.setCellRenderer(new ListCellRendererPicture(Icons));
           jList1.setModel(MyList);
           jList1.setTransferHandler(new ListTransferHandler());
           toggleMode();
+          restoreLayout();
     }
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {
+
         Object _Obj = e.getNewLeadSelectionPath().getLastPathComponent();
         DefaultMutableTreeNode _Node = DefaultMutableTreeNode.class.cast(_Obj);
         if (_Node.getUserObject().getClass()== FileNode.class) {
             FileNode userObject = FileNode.class.cast(_Node.getUserObject());
-         //_path = e.newLeadSelectionPath.lastPathComponent.userObject.file.path;
-            String _Path= userObject.getFile().getAbsolutePath();      
+            String _Path= userObject.getFile().getAbsolutePath(); 
+            setTitle("Browser-"+_Path);
             updateFileList(_Path,1);
         } else if (_Node.getUserObject().getClass()==DatPicture.class) {
             DatPicture userObject2 = DatPicture.class.cast(_Node.getUserObject());
             
         }
 
+
+    }
+    @Override
+    public String getWindowID(){
+        return m_WindowID;
     }
     @Override
     public void saveLayout() {
         if(isVisible()) {
-            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+            SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
+        SaveLoadSettings.getInstance().SetInt(getWindowID(),"Page",m_Page);
+        SaveLoadSettings.getInstance().SetString(getWindowID(),"Dir",m_Root);        
     }
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getWindowID(), "Window");
+        Integer Page =SaveLoadSettings.getInstance().GetInt(getWindowID(), "Page");
+        String Dir =SaveLoadSettings.getInstance().GetString(getWindowID(), "Dir");
         if(Rect!=null) {
             this.setBounds(Rect);
+        }
+        if(Dir!=null && Page!=null){
+           m_Root=Dir; 
+           m_Page=Page;
+           navigateTree(Dir);
+        }
+            
+        
+    }
+    private void navigateTree(String Dir){
+        CreateChildNodes _builder = new CreateChildNodes(this.treeModelDir,
+                (DefaultMutableTreeNode)this.treeModelDir.getRoot());
+        TreePath path= _builder.CreateChildNodesForPath(Dir);
+        if(path!=null) {
+           jTree1.scrollPathToVisible(path);
+            jTree1.expandPath(path);
+            jTree1.setSelectionPath(path);
+           // this.updateFileList(Dir,m_Page);
         }
     }
     /**
@@ -511,18 +543,65 @@ void updateFileList(String Root, int Page) {
             this.root = root;
             
         }
-
+        //this builds the tree for the given root with depth 1
         @Override
         public void run() {
             createChildren( root);
+            Tree.nodeStructureChanged(root);
         }
+        
+        //builds the tree from root of the model down the path
+        public TreePath CreateChildNodesForPath(String Path) {
+            TreePath path = null;
+            int _childs;
+            String _txt;
+            DefaultMutableTreeNode _parent = root;
+            DefaultMutableTreeNode _child=null ;
+            String _partPath="";
+            String[] parts = Path.split("\\\\");
+            for (int k=0; k<parts.length;k++) {
+                if(k==0) _partPath=parts[k]+"\\";   //      D:\
+                else if(k==1) _partPath=_partPath+parts[k];  //  D:\temp
+                else _partPath=_partPath+"\\"+parts[k]; //  D:\temp\test
 
+                _childs=this.Tree.getChildCount(_parent);
+                for (int i=0; i<_childs;i++) {
+                    _child = (DefaultMutableTreeNode)Tree.getChild(_parent, i);
+                    if(_child==null) return null;
+                    if (_child.getUserObject().getClass()== FileNode.class) {
+                        FileNode userObject = FileNode.class.cast(_child.getUserObject());
+                        _txt= userObject.getFile().getPath(); 
+                        if(_txt.equalsIgnoreCase(_partPath)) {
+                            createChildren(_child);
+                            _parent=_child;
+                            break;
+                        }
+                    }
+                }
+
+                /* _partPath=(_partPath.isEmpty()?(part):(_partPath+"\\"+part));
+                int row = (path==null ? 0 : jTree1.getRowForPath(path));
+                path = jTree1.getNextMatch(part, row, Position.Bias.Forward);
+               
+                if (path==null) {
+                    return (path);
+                } else {
+                  createChildren((DefaultMutableTreeNode)path.getLastPathComponent());  
+                }*/
+            }
+            if(_child!=null) path = new TreePath(Tree.getPathToRoot(_child));
+            return (path);
+        }
         private void createChildren(DefaultMutableTreeNode node) {
             File[] files=null;
+            try {
             if (node.getUserObject().getClass()== FileNode.class) {
              files = ((FileNode)node.getUserObject()).getFile().listFiles();
             } else if (node.getUserObject().getClass()== RootNode.class) {
               files= File.listRoots();
+            }
+            } catch (Exception Ex) {
+                Ex.getMessage();
             }
             if (files == null)
                 return;
@@ -540,7 +619,7 @@ void updateFileList(String Root, int Page) {
                    // createChildren(childNode);
                 }
             }
-            Tree.nodeStructureChanged(node);
+            
             
         }
 

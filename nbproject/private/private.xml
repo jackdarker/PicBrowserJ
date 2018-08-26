@@ -5,12 +5,8 @@
         <group>
             <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/MDIApplication.java</file>
             <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/PicBrowserJ.java</file>
-            <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/FrmPictureInfo.java</file>
-            <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/ModelPictures.java</file>
             <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/FrmBrowser.java</file>
             <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/FrmViewer.java</file>
-            <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/Cmds/CmdMovePicture.java</file>
-            <file>file:/D:/Projects/Java/Projects/PicBrowserJ/PicBrowserJ/src/picbrowserj/SaveLoadSettings.java</file>
         </group>
     </open-files>
 </project-private>

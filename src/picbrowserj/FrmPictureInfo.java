@@ -67,8 +67,10 @@ public class FrmPictureInfo
     /**
      * Creates new form FrmPictureInfo
      */
+    String m_WindowID;
     public FrmPictureInfo() {
-        setTitle("Info"+(++openFrameCount));
+        m_WindowID = "Info"+(++openFrameCount);
+        setTitle("Info");
         initComponents();
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -172,16 +174,19 @@ public class FrmPictureInfo
         });
         SrvPicManager.getInstance().DoCmd(_Cmd); 
     }
-
+    @Override
+    public String getWindowID(){
+        return m_WindowID;
+    }
     @Override
     public void saveLayout() {
         if(isVisible()) {
-            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+            SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
     }
 
     private void restoreLayout() {
-        Rectangle Rect = SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
+        Rectangle Rect = SaveLoadSettings.getInstance().GetRect(getWindowID(), "Window");
         if (Rect != null) {
             this.setBounds(Rect);
         }

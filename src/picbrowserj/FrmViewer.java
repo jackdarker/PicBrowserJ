@@ -28,9 +28,11 @@ public class FrmViewer extends javax.swing.JFrame
     /**
      * Creates new form FrmViewer
      */
+    String m_WindowID;
     public FrmViewer() {
+        m_WindowID = "Viewer"+(++openFrameCount);
         initComponents();
-        setTitle("Viewer"+(++openFrameCount));
+        setTitle("Viewer");
         jList1.setModel(MyList);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         restoreLayout();
@@ -41,15 +43,18 @@ public class FrmViewer extends javax.swing.JFrame
         }
         });
     }
-
+    @Override
+    public String getWindowID(){
+        return m_WindowID;
+    }
     @Override
     public void saveLayout() {
         if(isVisible()) {
-            SaveLoadSettings.getInstance().SetRect(getTitle(), "Window", getBounds());
+            SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
     }
     private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getTitle(), "Window");
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getWindowID(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }
