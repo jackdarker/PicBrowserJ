@@ -6,7 +6,9 @@
 package picbrowserj;
 
 import java.util.ArrayList;
-
+import picbrowserj.Cmds.CmdStackGroup;
+import picbrowserj.Interface.CmdStackListener;
+import picbrowserj.Interface.FrmInterface;
 /**
  *
  * @author jkhome
@@ -62,10 +64,27 @@ public class SrvPicManager
         }
         return s_Instance;
     }
+    public CmdStackGroup CmdStacks = new CmdStackGroup();
     public ArrayList<DatPicture> getPicturesToView() {
         return ModelPictures.getInstance().getAllPicture();
     }
-   
+   public void addCmdStackListener(CmdStackListener Wnd) {
+       CmdStacks.addListener(Wnd);
+   }
+    
+   public void SetActiveUndoStack(FrmInterface Wnd) {
+        if(Wnd!=null) {
+            CmdStacks.AddStack(Wnd.getCmdStack());
+            CmdStacks.SetActiveStack(Wnd.getCmdStack());
+        } else {
+            CmdStacks.SetActiveStack(null);
+        }
+    }
+    public void RemoveUndoStack(FrmInterface Wnd) {
+        if(Wnd!=null) {
+            CmdStacks.RemoveStack(Wnd.getCmdStack());
+        }
+    }
 
     private void loadData(){
         onEventPics_added(null);
@@ -76,7 +95,19 @@ public class SrvPicManager
     }
     
     public void DoCmd(picbrowserj.Interface.CmdInterface Cmd) {
-        Cmd.Redo();
+        CmdStacks.GetActiveStack().Push(Cmd);
+    }
+    public boolean CanRedo() {
+        return CmdStacks.GetActiveStack().CanRedo();
+    }
+    public boolean CanUndo() {
+        return CmdStacks.GetActiveStack().CanUndo();
+    }
+    public void Redo() {
+        CmdStacks.GetActiveStack().Redo();
+    }
+    public void Undo() {
+        CmdStacks.GetActiveStack().Undo();
     }
     // Events raised by Service
     void onEventPics_added(DatPicture Picture) {

@@ -18,6 +18,7 @@
 package picbrowserj.Cmds;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import picbrowserj.DatPicture;
 import picbrowserj.Interface.CmdInterface;
 import picbrowserj.Interface.Callable;
@@ -32,9 +33,12 @@ public class CmdMovePicture implements CmdInterface {
 
     protected DatPicture m_Picture=null;
     protected Path m_NewPath;
+    protected Path m_OldPath;
+    CmdInterface.UndoState m_Done=UndoState.BeforeFirstRun;
     protected Callable<CmdResult> m_PostAction;
     public CmdMovePicture(DatPicture Picture, Path NewPath,Callable<CmdResult> PostAction) {
         m_Picture = Picture;
+        m_OldPath = Paths.get(Picture.Path);
         m_NewPath=NewPath;
         m_PostAction = PostAction;
     }
@@ -44,7 +48,10 @@ public class CmdMovePicture implements CmdInterface {
     @Override
     public void Undo() {  
         try {
-            ExecPostAction(new CmdResult(false, "not supported"));
+            m_Picture.Path=m_NewPath.toString();
+            ModelPictures.getInstance().MovePicture(m_Picture,m_OldPath);
+            ExecPostAction(new CmdResult(true,""));
+            m_Done=UndoState.Undone;
         } catch(Exception ex) {
             java.util.logging.Logger.getLogger(CmdMovePicture.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);;
         }
@@ -52,11 +59,11 @@ public class CmdMovePicture implements CmdInterface {
 
     @Override
     public boolean CanUndo() {
-        return false;
+        return m_Done==UndoState.Done;
     }
     @Override
     public boolean IgnoreAsUndoRedo() {
-        return true;
+        return false;
     }
     @Override
     public void Redo() {
@@ -66,6 +73,7 @@ public class CmdMovePicture implements CmdInterface {
         } else {
             ModelPictures.getInstance().MovePicture(m_Picture,m_NewPath);
             ExecPostAction(new CmdResult(true,""));
+            m_Done=UndoState.Done;
         }
         } catch(Exception ex) {
              java.util.logging.Logger.getLogger(CmdMovePicture.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
@@ -74,7 +82,7 @@ public class CmdMovePicture implements CmdInterface {
 
     @Override
     public boolean CanRedo() {
-        return false;
+        return m_Done==UndoState.Undone;
     }
 
     @Override

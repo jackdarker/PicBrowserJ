@@ -17,15 +17,10 @@
  */
 package picbrowserj.Cmds;
 import picbrowserj.Interface.CmdInterface;
+import picbrowserj.Interface.CmdStackListener;
 import java.util.Vector;
 
-/* see observable for details how to use this works together with observer/observable
-*/
-interface CmdStackListener {
-    void EventCanRedoChanged();
-    void EventCanUndoChanged();
-    void EventUpdate();
-}
+
 /**
  *
  * @author jkhome
@@ -34,18 +29,33 @@ interface CmdStackListener {
  */
 public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
 
-    private void onEventCanRedoChanged() {
+    /**
+     *
+     */
+    protected void onEventCanRedoChanged() {
          for(CmdStackListener l: listeners) l.EventCanRedoChanged();
     }
-    private void onEventCanUndoChanged() {
+
+    /**
+     *
+     */
+    protected void onEventCanUndoChanged() {
          for(CmdStackListener l: listeners) l.EventCanUndoChanged();
     }
-    private void onEventUpdate() {
+
+    /**
+     *
+     */
+    protected void onEventUpdate() {
          for(CmdStackListener l: listeners) l.EventUpdate();
     }
     private int m_MaxUndo=10 ;
     private int m_CurrentCmd;
     private final Vector<picbrowserj.Interface.CmdInterface> m_CmdStack;
+
+    /**
+     *
+     */
     public CmdStack()
     {
         m_CmdStack = new Vector<picbrowserj.Interface.CmdInterface>();
@@ -56,6 +66,11 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
+
+    /**
+     *
+     * @param e
+     */
     public void RedoEvent(java.awt.event.ActionEvent e)
     {
         if (this != null) Redo();
@@ -65,6 +80,11 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
+
+    /**
+     *
+     * @param e
+     */
     public void UndoEvent(java.awt.event.ActionEvent e)
     {
         if (this != null) Undo();
@@ -74,6 +94,11 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// Pushs a command on the undo-stack and executes redo
     /// </summary>
     /// <param name="Command"></param>
+
+    /**
+     *
+     * @param Command
+     */
     public void Push(CmdInterface Command)
     {
         if (CanRedo())
@@ -94,10 +119,20 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
         }
         
     }
+
+    /**
+     * returns if the stack has an operation that can be Un-undone.
+     * @return
+     */
     public Boolean CanRedo()
     {
         return m_CurrentCmd < m_CmdStack.size()-1 ;
     }
+
+    /**
+     *
+     * @return
+     */
     public Boolean CanUndo()
     {
         return m_CurrentCmd >= 0;
@@ -105,6 +140,10 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// <summary>
     /// Redos the last command on the stack if there is one
     /// </summary>
+
+    /**
+     *
+     */
     public void Redo()
     {
         if (CanRedo())
@@ -116,9 +155,10 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
             this.onEventUpdate();
         }
     }
-    /// <summary>
-    /// Undos the last command on the stack if there is one
-    /// </summary>
+
+    /**
+     *Undos the last command on the stack if there is one
+     */
     public void Undo()
     {
         if (CanUndo())
@@ -130,10 +170,11 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
             this.onEventUpdate();
         }
     }
-    /// <summary>
-    /// Get textinfo of the Undo of the current command on the stack
-    /// </summary>
-    /// <returns></returns>
+
+    /**
+     *Get textinfo of the Undo of the current command on the stack
+     * @return
+     */
     public String GetUndoText()
     {
         if(!CanUndo()) return "Undo";
@@ -143,6 +184,11 @@ public class CmdStack extends picbrowserj.Observable<CmdStackListener>     {
     /// Get textinfo of the Redo of the current command on the stack
     /// </summary>
     /// <returns></returns>
+
+    /**
+     *
+     * @return
+     */
     public String GetRedoText()
     {
         if (!CanRedo()) return "Redo";

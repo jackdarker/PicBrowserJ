@@ -45,6 +45,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import picbrowserj.Cmds.CmdMovePicture;
 import picbrowserj.Cmds.CmdResult;
+import picbrowserj.Cmds.CmdStack;
 import picbrowserj.Cmds.CmdViewPicture;
 import picbrowserj.Interface.Callable2;
 import picbrowserj.Interface.CmdInterface;
@@ -63,13 +64,15 @@ public class FrmBrowser extends javax.swing.JInternalFrame
      * Creates new form FrmBrowser
      */
     String m_WindowID;
-    public FrmBrowser() {
+    CmdStack CmdStack;
+    public FrmBrowser(String ID) {
         super("Browser",
           true, //resizable
           true, //closable
           true, //maximizable
           true);//iconifiablesuper("Document #" + (++openFrameCount),
           initComponents();
+          CmdStack = new CmdStack();
           m_WindowID = "Browser"+(++openFrameCount);
           this.addInternalFrameListener(new InternalFrameAdapter() {
             public void InternalFrameClosed(WindowEvent e) {
@@ -95,7 +98,7 @@ public class FrmBrowser extends javax.swing.JInternalFrame
           jList1.setModel(MyList);
           jList1.setTransferHandler(new ListTransferHandler());
           toggleMode();
-          restoreLayout();
+          if(!ID.isEmpty()) restoreLayout(ID);
     }
 
     @Override
@@ -115,6 +118,11 @@ public class FrmBrowser extends javax.swing.JInternalFrame
 
 
     }
+    
+    @Override
+    public CmdStack getCmdStack() {
+        return CmdStack;
+    }
     @Override
     public String getWindowID(){
         return m_WindowID;
@@ -124,20 +132,21 @@ public class FrmBrowser extends javax.swing.JInternalFrame
         if(isVisible()) {
             SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
+        SaveLoadSettings.getInstance().SetString(getWindowID(), "Type", this.getClass().getName());
         SaveLoadSettings.getInstance().SetInt(getWindowID(),"Page",m_Page);
         SaveLoadSettings.getInstance().SetString(getWindowID(),"Dir",m_Root);        
     }
-    private void restoreLayout() {
-        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getWindowID(), "Window");
-        Integer Page =SaveLoadSettings.getInstance().GetInt(getWindowID(), "Page");
-        String Dir =SaveLoadSettings.getInstance().GetString(getWindowID(), "Dir");
+    private void restoreLayout(String ID) {
+        Rectangle Rect =SaveLoadSettings.getInstance().GetRect(ID, "Window");
+        Integer Page =SaveLoadSettings.getInstance().GetInt(ID, "Page");
+        String Dir =SaveLoadSettings.getInstance().GetString(ID, "Dir");
         if(Rect!=null) {
             this.setBounds(Rect);
         }
         if(Dir!=null && Page!=null){
            m_Root=Dir; 
            m_Page=Page;
-           navigateTree(Dir);
+           navigateTree(Dir); //Todo causes exception if other task is running?
         }
             
         
@@ -473,6 +482,9 @@ void updateFileList(String Root, int Page) {
     public void EventPics_moved(DatPicture Picture) {
         //update Picture List in case the picture was added/removed from this directory
         boolean _upd=false; 
+        //is this a picture moved to this directory?
+        _upd= 0==Paths.get(Picture.Path).getParent().compareTo(Paths.get(m_Root));
+        //..or was it contained in this list?
         Enumeration<DatPicture> en =MyList.elements();
         while (en.hasMoreElements()&& !_upd) {
             _upd = (en.nextElement().ID==Picture.ID);      
@@ -546,6 +558,8 @@ void updateFileList(String Root, int Page) {
         //this builds the tree for the given root with depth 1
         @Override
         public void run() {
+            if(root==null)
+                return;
             createChildren( root);
             Tree.nodeStructureChanged(root);
         }
@@ -729,14 +743,16 @@ void updateFileList(String Root, int Page) {
                 return false;
             }
             if (support.getComponent() instanceof JList) {
-                JList.DropLocation dropLocation = (JList.DropLocation) support
-                        .getDropLocation();
+                JList.DropLocation dropLocation = (JList.DropLocation) support.getDropLocation();
                 int dropIndex = dropLocation.getIndex();
                 JList<DatPicture> targetList = (JList<DatPicture>) support.getComponent();
-                DefaultListModel<DatPicture> listModel = (DefaultListModel<DatPicture>) targetList
-                        .getModel();
+                DefaultListModel<DatPicture> listModel = (DefaultListModel<DatPicture>) targetList.getModel();
                 //TODO move picture file to this directory -> this will trigger view update
-                DatPicture _Pic= new DatPicture(data,"");
+
+                DatPicture _Pic= ModelPictures.getInstance().getPictureByPath(data); 
+                if(_Pic==null) {
+                    _Pic =new DatPicture(data,"");
+                }
                 TreePath _tp = jTree1.getSelectionPath();
                 DefaultMutableTreeNode selectedNode =
                 ((DefaultMutableTreeNode)jTree1.getSelectionPath().getLastPathComponent());
@@ -776,7 +792,7 @@ void updateFileList(String Root, int Page) {
             if (Bt==1) {
                 Path _New =Paths.get(m_NewPath,Name).toAbsolutePath();
                 CmdInterface _Cmd = new CmdMovePicture(m_Pic,_New,null);
-                _Cmd.Redo(); 
+                SrvPicManager.getInstance().DoCmd(_Cmd); 
                 return new CmdResult(true,"");
             } else if(Bt==3) {
                 //todo delete

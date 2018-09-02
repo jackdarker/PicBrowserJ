@@ -17,6 +17,8 @@
  */
 package picbrowserj.Interface;
 
+import picbrowserj.Cmds.CmdStack;
+
 /**
  *
  * @author jkhome
@@ -24,4 +26,5 @@ package picbrowserj.Interface;
 public interface FrmInterface {
     public void saveLayout();
     public String getWindowID();
+    public CmdStack getCmdStack(); 
 }

@@ -9,26 +9,36 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.util.Vector;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
+import java.awt.event.WindowListener;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JInternalFrame;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameListener;
+import picbrowserj.Interface.CmdInterface;
+import picbrowserj.Interface.CmdStackListener;
+import picbrowserj.Cmds.CmdStack;
+import picbrowserj.Cmds.CmdStackGroup;
 import picbrowserj.Interface.FrmInterface;
 
 /**
  *
  * @author homeadmin
  */
-public class MDIApplication extends javax.swing.JFrame {
+public class MDIApplication extends javax.swing.JFrame 
+implements WindowListener,InternalFrameListener,CmdStackListener {
 
+    
     /**
      * Creates new form MDIApplication
      */
     public MDIApplication() {
         initComponents();
         SaveLoadSettings.init();
+
         SrvPicManager.init();
+        SrvPicManager.getInstance().addCmdStackListener(this);
         /* doesnt work if separat wind closed
         addWindowListener(new WindowAdapter() {
          @Override
@@ -37,9 +47,10 @@ public class MDIApplication extends javax.swing.JFrame {
         }
         });*/
         addWindowListener(new WindowAdapter() {
+            //when main-window closes memorize all open subwindows for restoring
             @Override
             public void windowClosing(WindowEvent e) {
-                Window[] windows = getWindows();
+                Window[] windows = getWindows();        //todo we need also to memorize how many of what type of window are open
                 for (Window window : windows)
                 {
                     if (window instanceof FrmInterface)
@@ -97,6 +108,9 @@ public class MDIApplication extends javax.swing.JFrame {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         deleteMenuItem = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        mnuUndo = new javax.swing.JMenuItem();
+        mnuRedo = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         contentMenuItem = new javax.swing.JMenuItem();
         aboutMenuItem = new javax.swing.JMenuItem();
@@ -168,6 +182,25 @@ public class MDIApplication extends javax.swing.JFrame {
         deleteMenuItem.setMnemonic('d');
         deleteMenuItem.setText("Delete");
         editMenu.add(deleteMenuItem);
+        editMenu.add(jSeparator1);
+
+        mnuUndo.setText("Undo");
+        mnuUndo.setEnabled(false);
+        mnuUndo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuUndoActionPerformed(evt);
+            }
+        });
+        editMenu.add(mnuUndo);
+
+        mnuRedo.setText("Redo");
+        mnuRedo.setEnabled(false);
+        mnuRedo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRedoActionPerformed(evt);
+            }
+        });
+        editMenu.add(mnuRedo);
 
         menuBar.add(editMenu);
 
@@ -208,29 +241,131 @@ public class MDIApplication extends javax.swing.JFrame {
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
     private void viewMenuNewBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewMenuNewBrowserActionPerformed
-        newBrowser();
+        newBrowser("");
     }//GEN-LAST:event_viewMenuNewBrowserActionPerformed
     private void saveLayout() {
         SaveLoadSettings.getInstance().SetRect(this.getClass().getName(), "Window", getBounds());
+        SaveLoadSettings.getInstance().SetString(this.getClass().getName(), "Type", this.getClass().getName());
     }
     private void restoreLayout() {
         Rectangle Rect =SaveLoadSettings.getInstance().GetRect(this.getClass().getName(), "Window");
         if(Rect!=null) {
             this.setBounds(Rect);
         }
-        newBrowser();
-        restoreViewer();
+        //try to restore previous views
+        Iterator<Entry<String,String>> _frms=SaveLoadSettings.getInstance().GetForms().entrySet().iterator();
+        while(_frms.hasNext()){
+            Entry<String,String> _entry =_frms.next();
+            switch(_entry.getValue()) {
+                case "picbrowserj.FrmViewer":
+                    restoreViewer();
+                    break;
+                case "picbrowserj.FrmBrowser":
+                    newBrowser(_entry.getKey());   //Todo explicitly push what to restore
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        
     }
     private void viewMenuNewViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewMenuNewViewerActionPerformed
         restoreViewer();
         
     }//GEN-LAST:event_viewMenuNewViewerActionPerformed
+    //--------------------------------------------------------------------------------
+    //functions related to undo-framework
+    @Override
+    public void EventCanRedoChanged() {
+        this.mnuRedo.setEnabled(SrvPicManager.getInstance().CanRedo());
+    }
+
+    @Override
+    public void EventCanUndoChanged() {
+        this.mnuUndo.setEnabled(SrvPicManager.getInstance().CanUndo());
+    }
+
+    @Override
+    public void EventUpdate() {
+        this.mnuRedo.setEnabled(SrvPicManager.getInstance().CanRedo());
+        this.mnuUndo.setEnabled(SrvPicManager.getInstance().CanUndo());
+    }
+    
+    private void mnuUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUndoActionPerformed
+        SrvPicManager.getInstance().Undo();
+    }//GEN-LAST:event_mnuUndoActionPerformed
+
+    private void mnuRedoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRedoActionPerformed
+        SrvPicManager.getInstance().Redo();
+    }//GEN-LAST:event_mnuRedoActionPerformed
+    //----------------------------------------------------------------------------------
+    @Override
+    public void windowOpened(WindowEvent e) {
+}
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        SrvPicManager.getInstance().RemoveUndoStack((FrmInterface)e.getSource());
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+}
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+ }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+ }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+        SrvPicManager.getInstance().SetActiveUndoStack((FrmInterface)e.getSource());
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+    }
+    @Override
+    public void internalFrameOpened(InternalFrameEvent e) {
+    }
+
+    @Override
+    public void internalFrameClosing(InternalFrameEvent e) {
+        SrvPicManager.getInstance().RemoveUndoStack((FrmInterface)e.getSource());
+    }
+
+    @Override
+    public void internalFrameClosed(InternalFrameEvent e) {
+    }
+
+    @Override
+    public void internalFrameIconified(InternalFrameEvent e) {
+    }
+
+    @Override
+    public void internalFrameDeiconified(InternalFrameEvent e) {
+    }
+
+    @Override
+    public void internalFrameActivated(InternalFrameEvent e) {
+       SrvPicManager.getInstance().SetActiveUndoStack((FrmInterface)e.getSource());
+    }
+
+    @Override
+    public void internalFrameDeactivated(InternalFrameEvent e) {
+    }
+
     public javax.swing.JInternalFrame[] getAllFrames() {
         return this.desktopPane.getAllFrames();
     }
-    private void newBrowser(){
+    private void newBrowser(String ID){
         
-        FrmBrowser frmBrowser = new FrmBrowser();
+        FrmBrowser frmBrowser = new FrmBrowser(ID);
+        frmBrowser.addInternalFrameListener(this); 
         frmBrowser.setVisible(true);
         frmBrowser.registerToObserver(SrvPicManager.getInstance());
         this.desktopPane.add(frmBrowser);     
@@ -241,10 +376,9 @@ public class MDIApplication extends javax.swing.JFrame {
         frmViewer.setVisible(true);     
         frmViewer.registerToObserver(SrvPicManager.getInstance());
         FrmPictureInfo frmPicInfo = new FrmPictureInfo();
-        
+        frmPicInfo.addWindowListener(this);
         frmPicInfo.setVisible(true);     
         frmPicInfo.registerToObserver(SrvPicManager.getInstance());
-      //??  frmViewer.registerObserver(frmPicInfo);
     }
     /**
      * @param args the command line arguments
@@ -293,7 +427,10 @@ public class MDIApplication extends javax.swing.JFrame {
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JMenuItem mnuRedo;
+    private javax.swing.JMenuItem mnuUndo;
     private javax.swing.JMenuItem openMenuItem;
     private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JMenuItem saveAsMenuItem;
@@ -302,5 +439,10 @@ public class MDIApplication extends javax.swing.JFrame {
     private javax.swing.JMenuItem viewMenuNewBrowser;
     private javax.swing.JMenuItem viewMenuNewViewer;
     // End of variables declaration//GEN-END:variables
+
+    
+    
+
+
 
 }

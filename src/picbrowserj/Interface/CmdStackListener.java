@@ -17,20 +17,10 @@
  */
 package picbrowserj.Interface;
 
-/**
- *
- * @author jkhome
- * 
- */
-public interface CmdInterface {
-    public enum UndoState { BeforeFirstRun, Done, Undone};
-    
-    //if true this command will execute on Redo but will not be pushed to CmdStack
-    boolean IgnoreAsUndoRedo(); 
-    void Undo();
-    boolean CanUndo();
-    void Redo();
-    boolean CanRedo();
-    String GetText();
+/* see observable for details how to use this works together with observer/observable
+*/
+public interface CmdStackListener {
+    void EventCanRedoChanged();
+    void EventCanUndoChanged();
+    void EventUpdate();
 }
-

@@ -40,6 +40,7 @@ public class CmdCreateTag implements CmdInterface {
             return m_DatTagResult;
         }
     }
+    CmdInterface.UndoState m_Done=UndoState.BeforeFirstRun;
     protected DatTag m_NewTag=null;
     protected Callable<CmdResultAdd> m_PostAction;
     public CmdCreateTag(String TagName, Callable<CmdResultAdd> PostAction) {
@@ -53,7 +54,13 @@ public class CmdCreateTag implements CmdInterface {
     @Override
     public void Undo() {  
         try {
-            ExecPostAction(new CmdResultAdd(false, "not supported",null));
+        if(m_NewTag==null) {
+            ExecPostAction(new CmdResultAdd(false,"not a tag",null));
+        } else {
+            ExecPostAction(new CmdResultAdd(true,"", 
+                ModelPictures.getInstance().deleteTag(m_NewTag)));
+            m_Done= UndoState.Undone;
+        }
         } catch(Exception ex) {
             java.util.logging.Logger.getLogger(CmdCreateTag.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
@@ -65,7 +72,7 @@ public class CmdCreateTag implements CmdInterface {
     }
     @Override
     public boolean CanUndo() {
-        return false;
+        return m_Done==UndoState.Done;
     }
 
     @Override
@@ -76,6 +83,7 @@ public class CmdCreateTag implements CmdInterface {
         } else {
             ExecPostAction(new CmdResultAdd(true,"", 
                 ModelPictures.getInstance().addTag(m_NewTag)));
+            m_Done=UndoState.Done;
         }
         } catch(Exception ex) {
             java.util.logging.Logger.getLogger(CmdAssignTags.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
@@ -84,7 +92,7 @@ public class CmdCreateTag implements CmdInterface {
 
     @Override
     public boolean CanRedo() {
-        return false;
+        return m_Done==UndoState.Undone;
     }
 
     @Override

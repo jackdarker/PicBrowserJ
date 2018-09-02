@@ -22,6 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -67,6 +71,18 @@ public class SaveLoadSettings {
             //Todo ??
             System.err.println("no user setup");
         }
+    }
+    public Map<String,String> GetForms() {
+        String Filter="Type";
+        Map<String,String> _Windows = new HashMap<String,String>();
+        Iterator<org.ini4j.Ini.Section> _all=Ini.values().iterator();
+        while(_all.hasNext()) {
+            org.ini4j.Ini.Section _sec=_all.next();
+            if(_sec.containsKey(Filter)) {
+                _Windows.put(_sec.getName() , _sec.get(Filter));
+            }
+        }
+        return _Windows;
     }
     public void SetString(String Window, String Name , String Value){
         Ini.put(Window, Name, Value);

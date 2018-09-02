@@ -14,6 +14,7 @@ import java.util.Observer;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import picbrowserj.Cmds.CmdStack;
 import picbrowserj.Cmds.CmdViewPicture;
 import picbrowserj.Interface.CmdInterface;
 import picbrowserj.Interface.FrmInterface;
@@ -29,11 +30,13 @@ public class FrmViewer extends javax.swing.JFrame
      * Creates new form FrmViewer
      */
     String m_WindowID;
+    CmdStack CmdStack;
     public FrmViewer() {
         m_WindowID = "Viewer"+(++openFrameCount);
+        CmdStack = new CmdStack();
         initComponents();
         setTitle("Viewer");
-        jList1.setModel(MyList);
+        jListPictures.setModel(MyList);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         restoreLayout();
         addWindowListener(new WindowAdapter() {
@@ -44,6 +47,10 @@ public class FrmViewer extends javax.swing.JFrame
         });
     }
     @Override
+    public CmdStack getCmdStack() {
+        return CmdStack;
+    }
+    @Override
     public String getWindowID(){
         return m_WindowID;
     }
@@ -52,6 +59,7 @@ public class FrmViewer extends javax.swing.JFrame
         if(isVisible()) {
             SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
+        SaveLoadSettings.getInstance().SetString(getWindowID(), "Type", this.getClass().getName());
     }
     private void restoreLayout() {
         Rectangle Rect =SaveLoadSettings.getInstance().GetRect(getWindowID(), "Window");
@@ -77,7 +85,7 @@ public class FrmViewer extends javax.swing.JFrame
         jSplitPane1 = new javax.swing.JSplitPane();
         canvas1 = new picbrowserj.Canvas();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        jListPictures = new javax.swing.JList();
 
         jMenu3.setText("jMenu3");
 
@@ -125,13 +133,13 @@ public class FrmViewer extends javax.swing.JFrame
 
         jSplitPane1.setRightComponent(canvas1);
 
-        jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+        jListPictures.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jListPictures.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                jList1ValueChanged(evt);
+                jListPicturesValueChanged(evt);
             }
         });
-        jScrollPane2.setViewportView(jList1);
+        jScrollPane2.setViewportView(jListPictures);
 
         jSplitPane1.setLeftComponent(jScrollPane2);
 
@@ -153,22 +161,22 @@ public class FrmViewer extends javax.swing.JFrame
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
+    private void jListPicturesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListPicturesValueChanged
         DatPicture Path;
-        if (jList1.getMaxSelectionIndex()<0) return;
+        if (jListPictures.getMaxSelectionIndex()<0) return;
         //Path=(DatPicture) jList1.getSelectedValue();
-        DatPicture Pic =(DatPicture) jList1.getModel().getElementAt( jList1.getMaxSelectionIndex());
+        DatPicture Pic =(DatPicture) jListPictures.getModel().getElementAt( jListPictures.getMaxSelectionIndex());
         
         CmdInterface _Cmd = new CmdViewPicture(Pic,null);
         _Cmd.Redo();
         /*MyObservable.UpdateReason reason;
         reason = m_Observer.new UpdateReason(MyObservable.updateReasonEnum.Pics_viewed,Pic);
         m_Observer.NotifyPicChanged(reason);*/
-    }//GEN-LAST:event_jList1ValueChanged
+    }//GEN-LAST:event_jListPicturesValueChanged
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if (jList1.getMaxSelectionIndex()<0) return;
-        DatPicture Pic =(DatPicture) jList1.getModel().getElementAt( jList1.getMaxSelectionIndex());
+        if (jListPictures.getMaxSelectionIndex()<0) return;
+        DatPicture Pic =(DatPicture) jListPictures.getModel().getElementAt( jListPictures.getMaxSelectionIndex());
         SrvPicManager.getInstance().SavePicture(Pic);
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -205,9 +213,9 @@ public class FrmViewer extends javax.swing.JFrame
         } else {
             canvas1.clearImage();
         }
-        DatPicture _selected = (jList1.getSelectedValue()!=null)? ((DatPicture)jList1.getSelectedValue()):null;
+        DatPicture _selected = (jListPictures.getSelectedValue()!=null)? ((DatPicture)jListPictures.getSelectedValue()):null;
         if (Pic !=null && _selected.Path!=Pic.Path) //dont retrigger event again
-            jList1.setSelectedValue(Pic, true);
+            jListPictures.setSelectedValue(Pic, true);
     }
     DefaultListModel<DatPicture> MyList = new DefaultListModel<>();
     
@@ -260,7 +268,7 @@ public class FrmViewer extends javax.swing.JFrame
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private picbrowserj.Canvas canvas1;
     private javax.swing.JButton jButton1;
-    private javax.swing.JList jList1;
+    private javax.swing.JList jListPictures;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;

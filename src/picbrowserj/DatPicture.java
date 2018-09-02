@@ -18,6 +18,7 @@
 package picbrowserj;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  *stores information for a picture
@@ -25,30 +26,82 @@ import java.util.ArrayList;
  */
 public class DatPicture {
     
+    /**
+     *
+     */
     public DatPicture(){
         ID = -1;
     }
+
+    /**
+     *
+     * @param path
+     * @param name
+     */
     public DatPicture(String path, String name){
         ID = -1;
         Path = path;
         Name = name;        
     }
+
+    /**
+     *
+     */
     public String Path;
+
+    /**
+     *
+     */
     public String Name;
+
+    /**
+     *
+     */
     public int ID;
+
+    /**
+     *
+     */
     public int Rating;
+
+    /**
+     *
+     */
     public int Status=0;
+
+    /**
+     *
+     */
     public ArrayList<DatTag> Tags=new ArrayList<DatTag>();
     
+    /**
+     *
+     * @param obj
+     */
     public void removeTag(DatTag obj) {
         Tags.remove(obj);
     }
+
+    /**
+     *
+     * @param obj
+     */
     public void addTag(DatTag obj) {
         if (!Tags.contains(obj)) Tags.add(obj);
     }
+
+    /**
+     *
+     * @param obj
+     */
     public void setTags(ArrayList<DatTag> obj) {
         Tags= new ArrayList<DatTag>(obj);
     }
+
+    /**
+     *
+     * @return
+     */
     public Boolean RequiresTagUpload() {
         Boolean _ret=false;
         for(int i=0; i< Tags.size();i++) {
@@ -57,6 +110,21 @@ public class DatPicture {
         return _ret;
     }
     
+    @Override
+    public boolean equals(Object o) {
+        DatPicture _Pic2 = (DatPicture)o;
+        if(this.ID!= 0 && _Pic2.ID==this.ID) return true;
+        
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.Path);
+        hash = 97 * hash + this.ID;
+        return hash;
+    }
     @Override
     public String toString() {
         String _ret = ((ID>0)?"":"* ") +   Name;

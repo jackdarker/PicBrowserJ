@@ -62,6 +62,7 @@ public class FrmPictureInfo
         implements SrvPicManagerListener, DocumentListener, FrmInterface {
 
     private DatTag TagToEdit;
+    public picbrowserj.Cmds.CmdStack CmdStack;
     final static String CANCEL_ACTION = "cancel-search";
     static int openFrameCount = 0;
     /**
@@ -70,6 +71,8 @@ public class FrmPictureInfo
     String m_WindowID;
     public FrmPictureInfo() {
         m_WindowID = "Info"+(++openFrameCount);
+        CmdStack = new CmdStack();
+        
         setTitle("Info");
         initComponents();
 
@@ -139,6 +142,11 @@ public class FrmPictureInfo
         updateTagEditor();
     }
 
+    @Override
+    public CmdStack getCmdStack() {
+        return CmdStack;
+    }
+
     class CancelAction extends AbstractAction {
         public void actionPerformed(ActionEvent ev) {
 
@@ -183,6 +191,7 @@ public class FrmPictureInfo
         if(isVisible()) {
             SaveLoadSettings.getInstance().SetRect(getWindowID(), "Window", getBounds());
         }
+        SaveLoadSettings.getInstance().SetString(getWindowID(), "Type", this.getClass().getName());
     }
 
     private void restoreLayout() {
